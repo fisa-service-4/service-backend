@@ -1,5 +1,8 @@
 package com.service.domain.auth.service;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserRecord;
 import com.service.domain.auth.dto.request.*;
 import com.service.domain.auth.dto.response.LoginResponse;
 import com.service.domain.auth.dto.response.SignupResponse;
@@ -100,7 +103,6 @@ public class AuthService {
     if (!storedCode.equals(request.getCode())) {
       throw new BusinessException(ErrorCode.AUTH_006);
     }
-
     redisTemplate.delete(PHONE_CODE_PREFIX + request.getPhoneNumber());
     redisTemplate
         .opsForValue()
@@ -232,6 +234,20 @@ public class AuthService {
         userRepository
             .findById(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_001));
+
+    try {
+      String e164Phone = toE164(user.getPhoneNumber());
+      UserRecord.CreateRequest createRequest =
+          new UserRecord.CreateRequest()
+              .setPhoneNumber(e164Phone)
+              .setEmail(user.getEmail())
+              .setDisplayName(user.getUserName());
+      UserRecord userRecord = FirebaseAuth.getInstance().createUser(createRequest);
+      user.updateFirebaseUid(userRecord.getUid());
+    } catch (FirebaseAuthException e) {
+      log.error("[Firebase] 유저 생성 실패 userId={}, message={}", userId, e.getMessage());
+    }
+
     user.activate();
   }
 
@@ -252,5 +268,14 @@ public class AuthService {
     if (ascending || descending) {
       throw new BusinessException(ErrorCode.AUTH_010);
     }
+  }
+
+  private String toE164(String phoneNumber) {
+    // 010-XXXX-XXXX 또는 010XXXXXXXX → +8210XXXXXXXX
+    String digits = phoneNumber.replaceAll("[^0-9]", "");
+    if (digits.startsWith("0")) {
+      digits = digits.substring(1);
+    }
+    return "+82" + digits;
   }
 }
