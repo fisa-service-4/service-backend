@@ -9,8 +9,6 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-
-// 회원가입, 프로필 수정
 public class UserProfile {
 
   @Id
@@ -28,7 +26,8 @@ public class UserProfile {
   @Column(name = "job_type", length = 100)
   private String jobType;
 
-  public void update(String jobType) {
-    this.jobType = jobType;
+  public void update(Boolean freelancerYn, String jobType) {
+    if (freelancerYn != null) this.freelancerYn = freelancerYn;
+    if (jobType != null) this.jobType = jobType;
   }
 }

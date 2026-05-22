@@ -69,6 +69,14 @@ public class User {
     LOCKED
   }
 
+  public void updateUserName(String userName) {
+    if (userName != null) this.userName = userName;
+  }
+
+  public void updateFirebaseUid(String firebaseUid) {
+    this.firebaseUid = firebaseUid;
+  }
+
   public void updateNotificationConsent(Boolean notificationConsentYn) {
     this.notificationConsentYn = notificationConsentYn;
   }
