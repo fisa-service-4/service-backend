@@ -1,7 +1,6 @@
 package com.service.domain.user.service;
 
 import com.service.domain.user.dto.request.ConsentUpdateRequest;
-import com.service.domain.user.dto.request.ProfileUpdateRequest;
 import com.service.domain.user.dto.response.UserResponse;
 import com.service.domain.user.entity.User;
 import com.service.domain.user.entity.UserProfile;
@@ -28,24 +27,9 @@ public class UserService {
   }
 
   @Transactional
-  public UserResponse updateProfile(Long userId, ProfileUpdateRequest request) {
-    User user = findUser(userId);
-    UserProfile profile = findProfile(userId);
-    user.updateUserName(request.getUserName());
-    profile.update(request.getFreelancerYn(), request.getJobType());
-    return UserResponse.of(user, profile);
-  }
-
-  @Transactional
   public void updateConsent(Long userId, ConsentUpdateRequest request) {
     User user = findUser(userId);
     user.updateNotificationConsent(request.getNotificationConsentYn());
-  }
-
-  @Transactional
-  public void withdraw(Long userId) {
-    User user = findUser(userId);
-    user.withdraw();
   }
 
   private User findUser(Long userId) {

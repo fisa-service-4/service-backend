@@ -1,7 +1,6 @@
 package com.service.domain.user.controller;
 
 import com.service.domain.user.dto.request.ConsentUpdateRequest;
-import com.service.domain.user.dto.request.ProfileUpdateRequest;
 import com.service.domain.user.dto.response.UserResponse;
 import com.service.domain.user.service.UserService;
 import com.service.global.response.ApiResponse;
@@ -28,28 +27,12 @@ public class UserController {
     return ResponseEntity.ok(ApiResponse.success(userService.getMe(userId)));
   }
 
-  @Operation(summary = "프로필 수정")
-  @PatchMapping("/me")
-  public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
-      Authentication authentication, @RequestBody ProfileUpdateRequest request) {
-    Long userId = (Long) authentication.getPrincipal();
-    return ResponseEntity.ok(ApiResponse.success(userService.updateProfile(userId, request)));
-  }
-
   @Operation(summary = "알림 동의 수정")
   @PatchMapping("/me/consent")
   public ResponseEntity<ApiResponse<Void>> updateConsent(
       Authentication authentication, @Valid @RequestBody ConsentUpdateRequest request) {
     Long userId = (Long) authentication.getPrincipal();
     userService.updateConsent(userId, request);
-    return ResponseEntity.ok(ApiResponse.success(null));
-  }
-
-  @Operation(summary = "회원 탈퇴")
-  @DeleteMapping("/me")
-  public ResponseEntity<ApiResponse<Void>> withdraw(Authentication authentication) {
-    Long userId = (Long) authentication.getPrincipal();
-    userService.withdraw(userId);
     return ResponseEntity.ok(ApiResponse.success(null));
   }
 }
