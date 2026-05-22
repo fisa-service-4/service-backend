@@ -84,8 +84,4 @@ public class User {
   public void activate() {
     this.status = Status.ACTIVE;
   }
-
-  public void withdraw() {
-    this.status = Status.WITHDRAW;
-  }
 }

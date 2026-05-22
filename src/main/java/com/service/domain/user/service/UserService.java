@@ -41,7 +41,7 @@ public class UserService {
     User user = findUser(userId);
     user.updateNotificationConsent(request.getNotificationConsentYn());
   }
-
+  
   @Transactional
   public void withdraw(Long userId) {
     User user = findUser(userId);
