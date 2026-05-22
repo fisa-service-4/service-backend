@@ -25,9 +25,4 @@ public class UserProfile {
 
   @Column(name = "job_type", length = 100)
   private String jobType;
-
-  public void update(Boolean freelancerYn, String jobType) {
-    if (freelancerYn != null) this.freelancerYn = freelancerYn;
-    if (jobType != null) this.jobType = jobType;
-  }
 }
