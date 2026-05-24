@@ -52,6 +52,9 @@ public class User {
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
 
+  @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+  private UserProfile profile;
+
   @PrePersist
   protected void onCreate() {
     this.createdAt = LocalDateTime.now();
@@ -79,5 +82,9 @@ public class User {
 
   public void activate() {
     this.status = Status.ACTIVE;
+  }
+
+  public void updateStatus(Status status) {
+    this.status = status;
   }
 }
