@@ -2,6 +2,7 @@ package com.service.domain.stock.service;
 
 import com.service.domain.stock.dto.request.OrderCreateRequest;
 import com.service.domain.stock.dto.response.OrderCancelResponse;
+import com.service.domain.stock.dto.response.OrderDetailResponse;
 import com.service.domain.stock.dto.response.OrderListResponse;
 import com.service.domain.stock.dto.response.OrderResponse;
 import com.service.global.client.TransactionServerClient;
@@ -19,6 +20,10 @@ public class OrderService {
       OrderCreateRequest request) {
     return OrderResponse.from(
         transactionServerClient.createOrder(authorization, pinToken, idempotencyKey, request));
+  }
+
+  public OrderDetailResponse getOrderDetail(String authorization, Long orderId) {
+    return OrderDetailResponse.from(transactionServerClient.getOrderDetail(authorization, orderId));
   }
 
   public OrderListResponse getOrders(

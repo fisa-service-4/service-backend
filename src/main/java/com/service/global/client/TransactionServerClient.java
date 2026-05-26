@@ -77,6 +77,25 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 주문 상세 조회
+  // ───────────────────────────────────────────────
+
+  public OrderDetailItem getOrderDetail(String authorization, Long orderId) {
+    try {
+      TxResponse<OrderDetailItem> response =
+          transactionServerRestClient
+              .get()
+              .uri("/baas/v1/stocks/orders/{orderId}", orderId)
+              .header("Authorization", authorization)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 주문 내역 조회
   // ───────────────────────────────────────────────
 
@@ -333,6 +352,25 @@ public class TransactionServerClient {
     private java.math.BigDecimal price;
     private String status;
     private java.time.LocalDateTime orderedAt;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class OrderDetailItem {
+    private Long orderId;
+    private String stockCode;
+    private String stockName;
+    private String orderType;
+    private String orderMethod;
+    private Integer quantity;
+    private Integer filledQuantity;
+    private Integer remainingQuantity;
+    private java.math.BigDecimal price;
+    private java.math.BigDecimal averageExecutionPrice;
+    private String status;
+    private java.time.LocalDateTime orderedAt;
+    private java.time.LocalDateTime updatedAt;
   }
 
   // ───────────────────────────────────────────────
