@@ -1,6 +1,7 @@
 package com.service.domain.stock.controller;
 
 import com.service.domain.stock.dto.request.OrderCreateRequest;
+import com.service.domain.stock.dto.response.OrderCancelResponse;
 import com.service.domain.stock.dto.response.OrderResponse;
 import com.service.domain.stock.service.OrderService;
 import com.service.global.response.ApiResponse;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -46,5 +48,24 @@ public class OrderController {
       @Valid @RequestBody OrderCreateRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success(orderService.createOrder(authorization, pinToken, idempotencyKey, request)));
+  }
+
+  @Operation(summary = "주문 취소")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200",
+        description = "취소 성공"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "401",
+        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
+  })
+  @PostMapping("/{orderId}/cancel")
+  public ResponseEntity<ApiResponse<OrderCancelResponse>> cancelOrder(
+      @Parameter(hidden = true) @RequestHeader("Authorization") String authorization,
+      @RequestHeader("Pin-Token") String pinToken,
+      @RequestHeader("Idempotency-Key") String idempotencyKey,
+      @PathVariable Long orderId) {
+    return ResponseEntity.ok(
+        ApiResponse.success(orderService.cancelOrder(authorization, pinToken, idempotencyKey, orderId)));
   }
 }

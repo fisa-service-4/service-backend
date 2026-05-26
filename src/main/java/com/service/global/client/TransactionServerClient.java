@@ -66,6 +66,28 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 주문 취소
+  // ───────────────────────────────────────────────
+
+  public OrderCancelItem cancelOrder(
+      String authorization, String pinToken, String idempotencyKey, Long orderId) {
+    try {
+      TxResponse<OrderCancelItem> response =
+          transactionServerRestClient
+              .post()
+              .uri("/baas/v1/stocks/orders/{orderId}/cancel", orderId)
+              .header("Authorization", authorization)
+              .header("Pin-Token", pinToken)
+              .header("Idempotency-Key", idempotencyKey)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 주문 생성
   // ───────────────────────────────────────────────
 
@@ -243,6 +265,18 @@ public class TransactionServerClient {
     private Integer remainingQuantity;
     private String status;
     private java.time.LocalDateTime orderedAt;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class OrderCancelItem {
+    private Long orderId;
+    private String status;
+    private Integer cancelledQuantity;
+    private Integer filledQuantity;
+    private Integer remainingQuantity;
+    private java.time.LocalDateTime cancelledAt;
   }
 
   // ───────────────────────────────────────────────
