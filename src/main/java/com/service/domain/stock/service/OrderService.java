@@ -2,6 +2,7 @@ package com.service.domain.stock.service;
 
 import com.service.domain.stock.dto.request.OrderCreateRequest;
 import com.service.domain.stock.dto.response.OrderCancelResponse;
+import com.service.domain.stock.dto.response.OrderListResponse;
 import com.service.domain.stock.dto.response.OrderResponse;
 import com.service.global.client.TransactionServerClient;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,12 @@ public class OrderService {
       OrderCreateRequest request) {
     return OrderResponse.from(
         transactionServerClient.createOrder(authorization, pinToken, idempotencyKey, request));
+  }
+
+  public OrderListResponse getOrders(
+      String authorization, String status, String orderType, int page, int size) {
+    return OrderListResponse.from(
+        transactionServerClient.getOrders(authorization, status, orderType, page, size));
   }
 
   public OrderCancelResponse cancelOrder(

@@ -65,6 +65,45 @@ public class TransactionServerClient {
     private List<T> content;
   }
 
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class TxPageData<T> {
+    private List<T> content;
+    private int page;
+    private int size;
+    private long totalElements;
+    private int totalPages;
+  }
+
+  // ───────────────────────────────────────────────
+  // 주문 내역 조회
+  // ───────────────────────────────────────────────
+
+  public TxPageData<OrderListItem> getOrders(
+      String authorization, String status, String orderType, int page, int size) {
+    try {
+      TxResponse<TxPageData<OrderListItem>> response =
+          transactionServerRestClient
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path("/baas/v1/stocks/orders")
+                          .queryParamIfPresent("status", java.util.Optional.ofNullable(status))
+                          .queryParamIfPresent("orderType", java.util.Optional.ofNullable(orderType))
+                          .queryParam("page", page)
+                          .queryParam("size", size)
+                          .build())
+              .header("Authorization", authorization)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
   // ───────────────────────────────────────────────
   // 주문 취소
   // ───────────────────────────────────────────────
@@ -277,6 +316,23 @@ public class TransactionServerClient {
     private Integer filledQuantity;
     private Integer remainingQuantity;
     private java.time.LocalDateTime cancelledAt;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class OrderListItem {
+    private Long orderId;
+    private String stockCode;
+    private String stockName;
+    private String orderType;
+    private String orderMethod;
+    private Integer quantity;
+    private Integer filledQuantity;
+    private Integer remainingQuantity;
+    private java.math.BigDecimal price;
+    private String status;
+    private java.time.LocalDateTime orderedAt;
   }
 
   // ───────────────────────────────────────────────
