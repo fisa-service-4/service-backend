@@ -1,5 +1,6 @@
 package com.service.domain.stock.controller;
 
+import com.service.domain.stock.dto.response.StockChartResponse;
 import com.service.domain.stock.dto.response.StockPriceResponse;
 import com.service.domain.stock.dto.response.StockSearchResponse;
 import com.service.domain.stock.service.StockService;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -57,5 +59,25 @@ public class StockController {
       @PathVariable String stockCode) {
     return ResponseEntity.ok(
         ApiResponse.success(stockService.getStockPrice(authorization, stockCode)));
+  }
+
+  @Operation(summary = "차트 조회")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200",
+        description = "조회 성공"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "401",
+        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
+  })
+  @GetMapping("/{stockCode}/chart")
+  public ResponseEntity<ApiResponse<StockChartResponse>> getStockChart(
+      @Parameter(hidden = true) @RequestHeader("Authorization") String authorization,
+      @PathVariable String stockCode,
+      @RequestParam String interval,
+      @Nullable @RequestParam(required = false) String from,
+      @Nullable @RequestParam(required = false) String to) {
+    return ResponseEntity.ok(
+        ApiResponse.success(stockService.getStockChart(authorization, stockCode, interval, from, to)));
   }
 }

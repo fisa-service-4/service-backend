@@ -66,6 +66,33 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 차트 조회
+  // ───────────────────────────────────────────────
+
+  public List<CandleItem> getStockChart(
+      String authorization, String stockCode, String interval, String from, String to) {
+    try {
+      TxResponse<TxContentData<CandleItem>> response =
+          transactionServerRestClient
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path("/baas/v1/stocks/{stockCode}/charts")
+                          .queryParam("interval", interval)
+                          .queryParamIfPresent("fromDate", java.util.Optional.ofNullable(from))
+                          .queryParamIfPresent("toDate", java.util.Optional.ofNullable(to))
+                          .build(stockCode))
+              .header("Authorization", authorization)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData().getContent();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 현재가 조회
   // ───────────────────────────────────────────────
 
@@ -108,6 +135,18 @@ public class TransactionServerClient {
     private java.math.BigDecimal currentPrice;
     private java.math.BigDecimal changeRate;
     private java.time.LocalDateTime updatedAt;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class CandleItem {
+    private String date;
+    private java.math.BigDecimal open;
+    private java.math.BigDecimal high;
+    private java.math.BigDecimal low;
+    private java.math.BigDecimal close;
+    private Long volume;
   }
 
   // ───────────────────────────────────────────────
