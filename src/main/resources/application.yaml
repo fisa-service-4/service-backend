@@ -30,3 +30,6 @@ jwt:
 
 firebase:
   credential-path: woorifis-service-firebase-adminsdk-fbsvc-bf3b482f03.json
+
+transaction-server:
+  url: http://localhost:8083
