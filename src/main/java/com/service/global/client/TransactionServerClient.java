@@ -66,6 +66,25 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 주문 가능 계좌 조회
+  // ───────────────────────────────────────────────
+
+  public List<StockAccountItem> getStockAccounts(String authorization) {
+    try {
+      TxResponse<TxContentData<StockAccountItem>> response =
+          transactionServerRestClient
+              .get()
+              .uri("/baas/v1/stocks/accounts")
+              .header("Authorization", authorization)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData().getContent();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 차트 조회
   // ───────────────────────────────────────────────
 
@@ -147,6 +166,16 @@ public class TransactionServerClient {
     private java.math.BigDecimal low;
     private java.math.BigDecimal close;
     private Long volume;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class StockAccountItem {
+    private Long accountId;
+    private String accountNumber;
+    private String accountName;
+    private String bankCode;
   }
 
   // ───────────────────────────────────────────────

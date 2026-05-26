@@ -1,5 +1,6 @@
 package com.service.domain.stock.controller;
 
+import com.service.domain.stock.dto.response.StockAccountsResponse;
 import com.service.domain.stock.dto.response.StockChartResponse;
 import com.service.domain.stock.dto.response.StockPriceResponse;
 import com.service.domain.stock.dto.response.StockSearchResponse;
@@ -59,6 +60,22 @@ public class StockController {
       @PathVariable String stockCode) {
     return ResponseEntity.ok(
         ApiResponse.success(stockService.getStockPrice(authorization, stockCode)));
+  }
+
+  @Operation(summary = "주문 가능 계좌 조회")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200",
+        description = "조회 성공"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "401",
+        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
+  })
+  @GetMapping("/accounts")
+  public ResponseEntity<ApiResponse<StockAccountsResponse>> getStockAccounts(
+      @Parameter(hidden = true) @RequestHeader("Authorization") String authorization) {
+    return ResponseEntity.ok(
+        ApiResponse.success(stockService.getStockAccounts(authorization)));
   }
 
   @Operation(summary = "차트 조회")

@@ -1,5 +1,6 @@
 package com.service.domain.stock.service;
 
+import com.service.domain.stock.dto.response.StockAccountsResponse;
 import com.service.domain.stock.dto.response.StockChartResponse;
 import com.service.domain.stock.dto.response.StockPriceResponse;
 import com.service.domain.stock.dto.response.StockSearchResponse;
@@ -21,6 +22,10 @@ public class StockService {
   public StockPriceResponse getStockPrice(String authorization, String stockCode) {
     return StockPriceResponse.from(
         transactionServerClient.getStockPrice(authorization, stockCode));
+  }
+
+  public StockAccountsResponse getStockAccounts(String authorization) {
+    return StockAccountsResponse.from(transactionServerClient.getStockAccounts(authorization));
   }
 
   public StockChartResponse getStockChart(
