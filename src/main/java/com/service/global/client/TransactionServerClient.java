@@ -77,6 +77,25 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 보유 종목 조회
+  // ───────────────────────────────────────────────
+
+  public List<HoldingItem> getHoldings(String authorization) {
+    try {
+      TxResponse<TxContentData<HoldingItem>> response =
+          transactionServerRestClient
+              .get()
+              .uri("/baas/v1/stocks/holdings")
+              .header("Authorization", authorization)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData().getContent();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 체결 내역 조회
   // ───────────────────────────────────────────────
 
@@ -381,6 +400,20 @@ public class TransactionServerClient {
     private java.math.BigDecimal price;
     private String status;
     private java.time.LocalDateTime orderedAt;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class HoldingItem {
+    private String stockCode;
+    private String stockName;
+    private Integer quantity;
+    private java.math.BigDecimal averagePrice;
+    private java.math.BigDecimal currentPrice;
+    private java.math.BigDecimal evaluationAmount;
+    private java.math.BigDecimal unrealizedProfit;
+    private java.math.BigDecimal profitRate;
   }
 
   @Getter
