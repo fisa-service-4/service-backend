@@ -77,6 +77,25 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 수익률 조회
+  // ───────────────────────────────────────────────
+
+  public ReturnsItem getReturns(String authorization) {
+    try {
+      TxResponse<ReturnsItem> response =
+          transactionServerRestClient
+              .get()
+              .uri("/baas/v1/stocks/returns")
+              .header("Authorization", authorization)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 보유 종목 조회
   // ───────────────────────────────────────────────
 
@@ -400,6 +419,15 @@ public class TransactionServerClient {
     private java.math.BigDecimal price;
     private String status;
     private java.time.LocalDateTime orderedAt;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class ReturnsItem {
+    private java.math.BigDecimal dailyReturnRate;
+    private java.math.BigDecimal monthlyReturnRate;
+    private java.math.BigDecimal yearlyReturnRate;
   }
 
   @Getter
