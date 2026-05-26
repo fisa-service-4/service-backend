@@ -66,6 +66,30 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 주문 생성
+  // ───────────────────────────────────────────────
+
+  public OrderItem createOrder(
+      String authorization, String pinToken, String idempotencyKey,
+      com.service.domain.stock.dto.request.OrderCreateRequest request) {
+    try {
+      TxResponse<OrderItem> response =
+          transactionServerRestClient
+              .post()
+              .uri("/baas/v1/stocks/orders")
+              .header("Authorization", authorization)
+              .header("Pin-Token", pinToken)
+              .header("Idempotency-Key", idempotencyKey)
+              .body(request)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 예수금 조회
   // ───────────────────────────────────────────────
 
@@ -203,6 +227,22 @@ public class TransactionServerClient {
   public static class CashBalanceItem {
     private java.math.BigDecimal cashBalance;
     private java.math.BigDecimal availableBalance;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class OrderItem {
+    private Long orderId;
+    private String stockCode;
+    private String orderType;
+    private String orderMethod;
+    private Integer quantity;
+    private java.math.BigDecimal price;
+    private Integer filledQuantity;
+    private Integer remainingQuantity;
+    private String status;
+    private java.time.LocalDateTime orderedAt;
   }
 
   // ───────────────────────────────────────────────
