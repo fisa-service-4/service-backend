@@ -1,5 +1,6 @@
 package com.service.domain.stock.service;
 
+import com.service.domain.stock.dto.response.StockPriceResponse;
 import com.service.domain.stock.dto.response.StockSearchResponse;
 import com.service.global.client.TransactionServerClient;
 import lombok.RequiredArgsConstructor;
@@ -14,5 +15,10 @@ public class StockService {
   public StockSearchResponse searchStocks(String authorization, String keyword) {
     return StockSearchResponse.from(
         transactionServerClient.searchStocks(authorization, keyword));
+  }
+
+  public StockPriceResponse getStockPrice(String authorization, String stockCode) {
+    return StockPriceResponse.from(
+        transactionServerClient.getStockPrice(authorization, stockCode));
   }
 }

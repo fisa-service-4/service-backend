@@ -66,6 +66,25 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 현재가 조회
+  // ───────────────────────────────────────────────
+
+  public StockPriceItem getStockPrice(String authorization, String stockCode) {
+    try {
+      TxResponse<StockPriceItem> response =
+          transactionServerRestClient
+              .get()
+              .uri("/baas/v1/stocks/{stockCode}/price", stockCode)
+              .header("Authorization", authorization)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 종목 관련 내부 타입
   // ───────────────────────────────────────────────
 
@@ -78,6 +97,17 @@ public class TransactionServerClient {
     private String market;
     private java.math.BigDecimal currentPrice;
     private java.math.BigDecimal changeRate;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class StockPriceItem {
+    private String stockCode;
+    private String stockName;
+    private java.math.BigDecimal currentPrice;
+    private java.math.BigDecimal changeRate;
+    private java.time.LocalDateTime updatedAt;
   }
 
   // ───────────────────────────────────────────────
