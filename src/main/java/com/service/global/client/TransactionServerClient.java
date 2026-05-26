@@ -66,6 +66,25 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 예수금 조회
+  // ───────────────────────────────────────────────
+
+  public CashBalanceItem getCashBalance(String authorization) {
+    try {
+      TxResponse<CashBalanceItem> response =
+          transactionServerRestClient
+              .get()
+              .uri("/baas/v1/stocks/cash-balance")
+              .header("Authorization", authorization)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 주문 가능 계좌 조회
   // ───────────────────────────────────────────────
 
@@ -176,6 +195,14 @@ public class TransactionServerClient {
     private String accountNumber;
     private String accountName;
     private String bankCode;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class CashBalanceItem {
+    private java.math.BigDecimal cashBalance;
+    private java.math.BigDecimal availableBalance;
   }
 
   // ───────────────────────────────────────────────
