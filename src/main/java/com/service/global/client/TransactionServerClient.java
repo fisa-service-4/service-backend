@@ -77,6 +77,35 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 체결 내역 조회
+  // ───────────────────────────────────────────────
+
+  public TxPageData<ExecutionItem> getExecutions(
+      String authorization, String stockCode, String from, String to, int page, int size) {
+    try {
+      TxResponse<TxPageData<ExecutionItem>> response =
+          transactionServerRestClient
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path("/baas/v1/stocks/executions")
+                          .queryParamIfPresent("stockCode", java.util.Optional.ofNullable(stockCode))
+                          .queryParamIfPresent("fromDate", java.util.Optional.ofNullable(from))
+                          .queryParamIfPresent("toDate", java.util.Optional.ofNullable(to))
+                          .queryParam("page", page)
+                          .queryParam("size", size)
+                          .build())
+              .header("Authorization", authorization)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 주문 상세 조회
   // ───────────────────────────────────────────────
 
@@ -352,6 +381,20 @@ public class TransactionServerClient {
     private java.math.BigDecimal price;
     private String status;
     private java.time.LocalDateTime orderedAt;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class ExecutionItem {
+    private Long executionId;
+    private Long orderId;
+    private String stockCode;
+    private String stockName;
+    private java.math.BigDecimal executedPrice;
+    private Integer executedQuantity;
+    private java.math.BigDecimal executionAmount;
+    private java.time.LocalDateTime executedAt;
   }
 
   @Getter
