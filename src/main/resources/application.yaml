@@ -10,9 +10,14 @@ spring:
     username: admin
     password: 1234
 
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/schema.sql
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     open-in-view: false
 
   data:
