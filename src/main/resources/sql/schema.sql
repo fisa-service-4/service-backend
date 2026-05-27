@@ -1,0 +1,235 @@
+-- =====================================================
+-- service-backend Operation DB Schema
+-- PostgreSQL 16 호환
+-- 주의: IF NOT EXISTS 필수 (mode=always 로 매 기동 시 실행됨)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS USERS
+(
+    user_id                  BIGINT       PRIMARY KEY,
+    firebase_uid             VARCHAR(255) NOT NULL UNIQUE,
+    email                    VARCHAR(255) NOT NULL UNIQUE,
+    password_hash            VARCHAR(255) NOT NULL,
+    user_name                VARCHAR(100) NOT NULL,
+    phone_number             VARCHAR(20)  NOT NULL UNIQUE,
+    role                     VARCHAR(30)  NOT NULL CHECK (role IN ('USER', 'ADMIN')),
+    status                   VARCHAR(30)  NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE', 'WITHDRAW', 'LOCKED')),
+    notification_consent_yn  BOOLEAN      NOT NULL,
+    terms_consent_yn         BOOLEAN      NOT NULL,
+    mydata_consent_yn        BOOLEAN      NOT NULL,
+    created_at               TIMESTAMP    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS USER_PROFILE
+(
+    user_id        BIGINT       PRIMARY KEY,
+    freelancer_yn  BOOLEAN      NOT NULL,
+    job_type       VARCHAR(100),
+
+    CONSTRAINT fk_user_profile_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS PIN_AUTH
+(
+    user_id        BIGINT       PRIMARY KEY,
+    pin_hash       VARCHAR(255) NOT NULL,
+    fail_count     INT          NOT NULL,
+    locked_yn      BOOLEAN      NOT NULL,
+    locked_at      TIMESTAMP,
+    pin_changed_at TIMESTAMP,
+
+    CONSTRAINT fk_pin_auth_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS LINKED_FINANCIAL_ACCOUNT
+(
+    linked_account_id    BIGINT       PRIMARY KEY,
+    user_id              BIGINT       NOT NULL,
+    institution_type     VARCHAR(30)  NOT NULL CHECK (institution_type IN ('BANK', 'SECURITIES', 'CARD')),
+    institution_code     VARCHAR(30)  NOT NULL,
+    external_account_id  BIGINT       NOT NULL,
+    account_masking      VARCHAR(100) NOT NULL,
+    synced_at            TIMESTAMP,
+
+    CONSTRAINT fk_linked_financial_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS ACCOUNT_MAPPING
+(
+    mapping_id         BIGINT      PRIMARY KEY,
+    user_id            BIGINT      NOT NULL,
+    linked_account_id  BIGINT      NOT NULL,
+    mapping_type       VARCHAR(30) NOT NULL CHECK (mapping_type IN ('INCOME', 'SALARY', 'STOCK', 'EMERGENCY')),
+
+    CONSTRAINT fk_account_mapping_linked
+        FOREIGN KEY (linked_account_id) REFERENCES LINKED_FINANCIAL_ACCOUNT (linked_account_id)
+);
+
+CREATE TABLE IF NOT EXISTS INTEGRATED_TRANSACTION_HISTORY
+(
+    integrated_transaction_id  BIGINT         PRIMARY KEY,
+    user_id                    BIGINT         NOT NULL,
+    linked_account_id          BIGINT,
+    institution_type           VARCHAR(30)    NOT NULL CHECK (institution_type IN ('BANK', 'CARD')),
+    transaction_type           VARCHAR(30)    NOT NULL CHECK (transaction_type IN ('INCOME', 'EXPENSE')),
+    transaction_category       VARCHAR(100),
+    transaction_amount         DECIMAL(18, 2) NOT NULL,
+    balance_after              DECIMAL(18, 2),
+    merchant_name              VARCHAR(255),
+    original_transaction_id    BIGINT         NOT NULL,
+    transaction_occurred_at    TIMESTAMP      NOT NULL,
+    synced_at                  TIMESTAMP      NOT NULL,
+
+    CONSTRAINT fk_integrated_tx_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id),
+    CONSTRAINT fk_integrated_tx_linked
+        FOREIGN KEY (linked_account_id) REFERENCES LINKED_FINANCIAL_ACCOUNT (linked_account_id)
+);
+
+CREATE TABLE IF NOT EXISTS INTEGRATED_STOCK_TRANSACTION_HISTORY
+(
+    integrated_stock_transaction_id  BIGINT         PRIMARY KEY,
+    user_id                          BIGINT         NOT NULL,
+    linked_account_id                BIGINT         NOT NULL,
+    stock_code                       VARCHAR(20)    NOT NULL,
+    stock_name                       VARCHAR(255)   NOT NULL,
+    transaction_type                 VARCHAR(30)    NOT NULL CHECK (transaction_type IN ('BUY', 'SELL')),
+    transaction_quantity             INT            NOT NULL,
+    transaction_unit_price           DECIMAL(18, 2) NOT NULL,
+    transaction_total_amount         DECIMAL(18, 2) NOT NULL,
+    cash_balance_after               DECIMAL(18, 2),
+    holding_quantity_after           INT,
+    average_purchase_price           DECIMAL(18, 2),
+    realized_profit                  DECIMAL(18, 2),
+    realized_profit_rate             DECIMAL(5, 2),
+    original_execution_id            BIGINT         NOT NULL,
+    transaction_occurred_at          TIMESTAMP      NOT NULL,
+    synced_at                        TIMESTAMP      NOT NULL,
+
+    CONSTRAINT fk_integrated_stock_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id),
+    CONSTRAINT fk_integrated_stock_linked
+        FOREIGN KEY (linked_account_id) REFERENCES LINKED_FINANCIAL_ACCOUNT (linked_account_id)
+);
+
+CREATE TABLE IF NOT EXISTS CONTRACT
+(
+    contract_id            BIGINT         PRIMARY KEY,
+    user_id                BIGINT         NOT NULL,
+    client_name            VARCHAR(255)   NOT NULL,
+    contract_amount        DECIMAL(18, 2) NOT NULL,
+    tax_type               VARCHAR(30)    NOT NULL CHECK (tax_type IN ('BUSINESS', 'ETC', 'ARTIST')),
+    tax_rate               DECIMAL(5, 2)  NOT NULL,
+    expected_payment_date  DATE,
+    actual_payment_date    DATE,
+    contract_status        VARCHAR(30)    NOT NULL CHECK (contract_status IN ('PENDING', 'PAID', 'DELAYED', 'CANCELLED')),
+    memo                   TEXT,
+    created_at             TIMESTAMP      NOT NULL,
+
+    CONSTRAINT fk_contract_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS CONTRACT_SETTLEMENT
+(
+    settlement_id    BIGINT         PRIMARY KEY,
+    contract_id      BIGINT         NOT NULL,
+    tax_rate         DECIMAL(5, 2)  NOT NULL,
+    deducted_amount  DECIMAL(18, 2) NOT NULL,
+    actual_income    DECIMAL(18, 2) NOT NULL,
+    calculated_at    TIMESTAMP      NOT NULL,
+
+    CONSTRAINT fk_contract_settlement
+        FOREIGN KEY (contract_id) REFERENCES CONTRACT (contract_id)
+);
+
+CREATE TABLE IF NOT EXISTS PAYMENT_MATCHING
+(
+    matching_id         BIGINT      PRIMARY KEY,
+    contract_id         BIGINT      NOT NULL,
+    bank_transaction_id BIGINT      NOT NULL,
+    matching_status     VARCHAR(30) NOT NULL CHECK (matching_status IN ('MATCHED', 'FAILED', 'TBC', 'MANUAL_MATCHED')),
+    matched_by          VARCHAR(30) NOT NULL CHECK (matched_by IN ('SYSTEM', 'USER')),
+    matched_at          TIMESTAMP,
+
+    CONSTRAINT fk_payment_matching_contract
+        FOREIGN KEY (contract_id) REFERENCES CONTRACT (contract_id)
+);
+
+CREATE TABLE IF NOT EXISTS VIRTUAL_SALARY_SETTING
+(
+    user_id           BIGINT         PRIMARY KEY,
+    target_salary     DECIMAL(18, 2) NOT NULL,
+    payday            INT            NOT NULL,
+    investment_ratio  DECIMAL(5, 2),
+    emergency_ratio   DECIMAL(5, 2),
+    priority_order    JSONB,
+    updated_at        TIMESTAMP      NOT NULL,
+
+    CONSTRAINT fk_virtual_salary_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS FAVORITE_STOCK
+(
+    favorite_stock_id  BIGINT      PRIMARY KEY,
+    user_id            BIGINT      NOT NULL,
+    stock_code         VARCHAR(20) NOT NULL,
+    created_at         TIMESTAMP   NOT NULL,
+
+    CONSTRAINT fk_favorite_stock_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS AI_CHAT_SESSION
+(
+    session_id    BIGINT      PRIMARY KEY,
+    user_id       BIGINT      NOT NULL,
+    session_type  VARCHAR(30) NOT NULL CHECK (session_type IN ('CHAT', 'TRANSFER', 'STOCK', 'ANALYSIS')),
+    updated_at    TIMESTAMP   NOT NULL,
+
+    CONSTRAINT fk_ai_chat_session_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS AI_CHAT_MESSAGE
+(
+    message_id           BIGINT      PRIMARY KEY,
+    session_id           BIGINT      NOT NULL,
+    role                 VARCHAR(30) NOT NULL CHECK (role IN ('USER', 'AI', 'SYSTEM')),
+    content              TEXT        NOT NULL,
+    action_type          VARCHAR(50),
+    action_confirmed_yn  BOOLEAN     NOT NULL,
+    created_at           TIMESTAMP   NOT NULL,
+
+    CONSTRAINT fk_ai_chat_message_session
+        FOREIGN KEY (session_id) REFERENCES AI_CHAT_SESSION (session_id)
+);
+
+CREATE TABLE IF NOT EXISTS NOTIFICATION
+(
+    notification_id  BIGINT      PRIMARY KEY,
+    user_id          BIGINT      NOT NULL,
+    type             VARCHAR(50) NOT NULL,
+    content          TEXT        NOT NULL,
+    read_yn          BOOLEAN     NOT NULL,
+    created_at       TIMESTAMP   NOT NULL,
+
+    CONSTRAINT fk_notification_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS AI_BRIEFING
+(
+    briefing_id    BIGINT      PRIMARY KEY,
+    user_id        BIGINT      NOT NULL,
+    briefing_type  VARCHAR(30) NOT NULL CHECK (briefing_type IN ('ASSET', 'STOCK')),
+    content        TEXT        NOT NULL,
+    created_at     TIMESTAMP   NOT NULL,
+
+    CONSTRAINT fk_ai_briefing_user
+        FOREIGN KEY (user_id) REFERENCES USERS (user_id)
+);
