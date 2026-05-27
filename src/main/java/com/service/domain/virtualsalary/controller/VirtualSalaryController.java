@@ -1,10 +1,14 @@
 package com.service.domain.virtualsalary.controller;
 
 import com.service.domain.virtualsalary.dto.request.ContractCreateRequest;
+import com.service.domain.virtualsalary.dto.request.VirtualSalarySettingRequest;
 import com.service.domain.virtualsalary.dto.response.ContractCreateResponse;
 import com.service.domain.virtualsalary.dto.response.ContractDetailResponse;
 import com.service.domain.virtualsalary.dto.response.ContractListResponse;
+import com.service.domain.virtualsalary.dto.response.VirtualSalarySaveResponse;
+import com.service.domain.virtualsalary.dto.response.VirtualSalarySettingResponse;
 import com.service.domain.virtualsalary.service.ContractService;
+import com.service.domain.virtualsalary.service.VirtualSalarySettingService;
 import com.service.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -17,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,13 +29,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Contract", description = "계약 관리 API")
+@Tag(name = "VirtualSalary", description = "가상월급 및 계약 관리 API")
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class VirtualSalaryController {
 
   private final ContractService contractService;
+  private final VirtualSalarySettingService virtualSalarySettingService;
 
   @Operation(summary = "계약 생성", description = "프리랜서 계약 정보를 등록하고 세금 정산을 계산합니다.")
   @ApiResponses({
@@ -89,5 +95,73 @@ public class VirtualSalaryController {
     Long userId = (Long) authentication.getPrincipal();
     return ResponseEntity.ok(
         ApiResponse.success(contractService.getContractDetail(userId, contractId)));
+  }
+
+  // ─── Virtual Salary Setting ────────────────────────────────────────────────
+
+  @Operation(summary = "가상월급 설정 조회", description = "현재 사용자의 가상월급 설정을 조회합니다.")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200",
+        description = "가상월급 설정 조회 성공"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "401",
+        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "404",
+        description = "VIRTUAL_SALARY_001: 가상월급 설정이 없습니다.")
+  })
+  @GetMapping("/virtual-salary")
+  public ResponseEntity<ApiResponse<VirtualSalarySettingResponse>> getVirtualSalarySetting(
+      Authentication authentication) {
+
+    Long userId = (Long) authentication.getPrincipal();
+    return ResponseEntity.ok(ApiResponse.success(virtualSalarySettingService.getSetting(userId)));
+  }
+
+  @Operation(
+      summary = "가상월급 설정 저장",
+      description =
+          "가상월급 설정을 저장합니다. 기존 설정이 없으면 생성하고, 있으면 덮어씁니다(upsert)."
+              + " investmentRatio + emergencyRatio <= 100 정책이 적용됩니다.")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "201",
+        description = "가상월급 설정 저장 성공"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "400",
+        description = "VALID_001: 입력값 오류 | VIRTUAL_SALARY_002: 투자 비율과 비상금 비율의 합이 100 초과"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "401",
+        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
+  })
+  @PostMapping("/virtual-salary")
+  public ResponseEntity<ApiResponse<VirtualSalarySaveResponse>> saveVirtualSalarySetting(
+      Authentication authentication, @Valid @RequestBody VirtualSalarySettingRequest request) {
+
+    Long userId = (Long) authentication.getPrincipal();
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.success(virtualSalarySettingService.saveSetting(userId, request)));
+  }
+
+  @Operation(summary = "가상월급 설정 수정", description = "기존 가상월급 설정을 수정합니다. 설정이 없으면 새로 생성합니다(upsert).")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200",
+        description = "가상월급 설정 수정 성공"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "400",
+        description = "VALID_001: 입력값 오류 | VIRTUAL_SALARY_002: 투자 비율과 비상금 비율의 합이 100 초과"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "401",
+        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
+  })
+  @PatchMapping("/virtual-salary")
+  public ResponseEntity<ApiResponse<VirtualSalarySaveResponse>> updateVirtualSalarySetting(
+      Authentication authentication, @Valid @RequestBody VirtualSalarySettingRequest request) {
+
+    Long userId = (Long) authentication.getPrincipal();
+    return ResponseEntity.ok(
+        ApiResponse.success(virtualSalarySettingService.updateSetting(userId, request)));
   }
 }
