@@ -1,7 +1,7 @@
-package com.service.domain.home.entity;
+package com.service.domain.virtualsalary.entity;
 
-import com.service.domain.home.enumtype.MatchedBy;
-import com.service.domain.home.enumtype.MatchingStatus;
+import com.service.domain.virtualsalary.enumtype.MatchedBy;
+import com.service.domain.virtualsalary.enumtype.MatchingStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;

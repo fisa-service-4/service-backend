@@ -1,4 +1,4 @@
-package com.service.domain.home.enumtype;
+package com.service.domain.virtualsalary.enumtype;
 
 public enum ContractStatus {
   PENDING,

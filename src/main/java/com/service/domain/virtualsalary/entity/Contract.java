@@ -1,7 +1,7 @@
-package com.service.domain.home.entity;
+package com.service.domain.virtualsalary.entity;
 
-import com.service.domain.home.enumtype.ContractStatus;
-import com.service.domain.home.enumtype.TaxType;
+import com.service.domain.virtualsalary.enumtype.ContractStatus;
+import com.service.domain.virtualsalary.enumtype.TaxType;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;

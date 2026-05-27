@@ -1,4 +1,4 @@
-package com.service.domain.home.entity;
+package com.service.domain.virtualsalary.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
