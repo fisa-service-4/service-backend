@@ -39,7 +39,7 @@ public class Contract {
   @Column(name = "tax_rate", nullable = false)
   private BigDecimal taxRate;
 
-  @Column(name = "expected_payment_date")
+  @Column(name = "expected_payment_date", nullable = false)
   private LocalDate expectedPaymentDate;
 
   @Column(name = "actual_payment_date")
@@ -58,6 +58,20 @@ public class Contract {
   @OneToOne(mappedBy = "contract", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private ContractSettlement settlement;
 
+  @Builder.Default
   @OneToMany(mappedBy = "contract", fetch = FetchType.LAZY)
   private List<PaymentMatching> paymentMatchings = new ArrayList<>();
+
+  public void assignSettlement(ContractSettlement settlement) {
+    this.settlement = settlement;
+
+    if (settlement.getContract() != this) {
+      settlement.assignContract(this);
+    }
+  }
+
+  @PrePersist
+  public void prePersist() {
+    this.createdAt = LocalDateTime.now();
+  }
 }
