@@ -33,4 +33,13 @@ public class ContractSettlement {
 
   @Column(name = "calculated_at", nullable = false)
   private LocalDateTime calculatedAt;
+
+  public void assignContract(Contract contract) {
+    this.contract = contract;
+  }
+
+  @PrePersist
+  public void prePersist() {
+    this.calculatedAt = LocalDateTime.now();
+  }
 }
