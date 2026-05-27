@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import lombok.*;
 
 @Entity
-@Table(name = "PAYMENT_MATCHING")
+@Table(name = "payment_matching")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor

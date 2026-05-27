@@ -11,7 +11,7 @@ import java.util.List;
 import lombok.*;
 
 @Entity
-@Table(name = "CONTRACT")
+@Table(name = "contract")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
