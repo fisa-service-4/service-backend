@@ -4,14 +4,12 @@ import com.service.domain.stock.dto.response.ExecutionListResponse;
 import com.service.domain.stock.service.ExecutionService;
 import com.service.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.lang.Nullable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,7 +33,7 @@ public class ExecutionController {
   })
   @GetMapping
   public ResponseEntity<ApiResponse<ExecutionListResponse>> getExecutions(
-      @Parameter(hidden = true) @RequestHeader("Authorization") String authorization,
+      @RequestParam Long accountId,
       @Nullable @RequestParam(required = false) String stockCode,
       @Nullable @RequestParam(required = false) String from,
       @Nullable @RequestParam(required = false) String to,
@@ -43,6 +41,6 @@ public class ExecutionController {
       @RequestParam(defaultValue = "20") int size) {
     return ResponseEntity.ok(
         ApiResponse.success(
-            executionService.getExecutions(authorization, stockCode, from, to, page, size)));
+            executionService.getExecutions(accountId, stockCode, from, to, page, size)));
   }
 }

@@ -8,6 +8,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class FavoriteStockAddRequest {
 
-  @NotBlank
-  private String stockCode;
+  @NotBlank private String stockCode;
 }

@@ -8,7 +8,6 @@ import com.service.domain.stock.dto.response.OrderResponse;
 import com.service.domain.stock.service.OrderService;
 import com.service.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -47,12 +46,11 @@ public class OrderController {
   })
   @PostMapping
   public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
-      @Parameter(hidden = true) @RequestHeader("Authorization") String authorization,
-      @RequestHeader("Pin-Token") String pinToken,
       @RequestHeader("Idempotency-Key") String idempotencyKey,
+      @RequestParam Long accountId,
       @Valid @RequestBody OrderCreateRequest request) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success(orderService.createOrder(authorization, pinToken, idempotencyKey, request)));
+        .body(ApiResponse.success(orderService.createOrder(idempotencyKey, accountId, request)));
   }
 
   @Operation(summary = "주문 상세 조회")
@@ -66,10 +64,8 @@ public class OrderController {
   })
   @GetMapping("/{orderId}")
   public ResponseEntity<ApiResponse<OrderDetailResponse>> getOrderDetail(
-      @Parameter(hidden = true) @RequestHeader("Authorization") String authorization,
       @PathVariable Long orderId) {
-    return ResponseEntity.ok(
-        ApiResponse.success(orderService.getOrderDetail(authorization, orderId)));
+    return ResponseEntity.ok(ApiResponse.success(orderService.getOrderDetail(orderId)));
   }
 
   @Operation(summary = "주문 내역 조회")
@@ -83,13 +79,13 @@ public class OrderController {
   })
   @GetMapping
   public ResponseEntity<ApiResponse<OrderListResponse>> getOrders(
-      @Parameter(hidden = true) @RequestHeader("Authorization") String authorization,
+      @RequestParam Long accountId,
       @Nullable @RequestParam(required = false) String status,
       @Nullable @RequestParam(required = false) String orderType,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
     return ResponseEntity.ok(
-        ApiResponse.success(orderService.getOrders(authorization, status, orderType, page, size)));
+        ApiResponse.success(orderService.getOrders(accountId, status, orderType, page, size)));
   }
 
   @Operation(summary = "주문 취소")
@@ -103,11 +99,9 @@ public class OrderController {
   })
   @PostMapping("/{orderId}/cancel")
   public ResponseEntity<ApiResponse<OrderCancelResponse>> cancelOrder(
-      @Parameter(hidden = true) @RequestHeader("Authorization") String authorization,
-      @RequestHeader("Pin-Token") String pinToken,
       @RequestHeader("Idempotency-Key") String idempotencyKey,
       @PathVariable Long orderId) {
     return ResponseEntity.ok(
-        ApiResponse.success(orderService.cancelOrder(authorization, pinToken, idempotencyKey, orderId)));
+        ApiResponse.success(orderService.cancelOrder(idempotencyKey, orderId)));
   }
 }

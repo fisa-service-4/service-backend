@@ -61,13 +61,12 @@ public class TransactionServerClient {
   // 수익률 조회
   // ───────────────────────────────────────────────
 
-  public ReturnsItem getReturns(String authorization) {
+  public ReturnsItem getReturns(Long accountId) {
     try {
       TxResponse<ReturnsItem> response =
           transactionServerRestClient
               .get()
-              .uri("/baas/v1/stocks/returns")
-              .header("Authorization", authorization)
+              .uri("/baas/v1/stock/accounts/{accountId}/returns", accountId)
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
       return response.getData();
@@ -80,13 +79,12 @@ public class TransactionServerClient {
   // 보유 종목 조회
   // ───────────────────────────────────────────────
 
-  public List<HoldingItem> getHoldings(String authorization) {
+  public List<HoldingItem> getHoldings(Long accountId) {
     try {
       TxResponse<TxContentData<HoldingItem>> response =
           transactionServerRestClient
               .get()
-              .uri("/baas/v1/stocks/holdings")
-              .header("Authorization", authorization)
+              .uri("/baas/v1/stock/accounts/{accountId}/holdings", accountId)
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
       return response.getData().getContent();
@@ -100,7 +98,7 @@ public class TransactionServerClient {
   // ───────────────────────────────────────────────
 
   public TxPageData<ExecutionItem> getExecutions(
-      String authorization, String stockCode, String from, String to, int page, int size) {
+      Long accountId, String stockCode, String from, String to, int page, int size) {
     try {
       TxResponse<TxPageData<ExecutionItem>> response =
           transactionServerRestClient
@@ -108,14 +106,14 @@ public class TransactionServerClient {
               .uri(
                   uriBuilder ->
                       uriBuilder
-                          .path("/baas/v1/stocks/executions")
-                          .queryParamIfPresent("stockCode", java.util.Optional.ofNullable(stockCode))
+                          .path("/baas/v1/stock/accounts/{accountId}/executions")
+                          .queryParamIfPresent(
+                              "stockCode", java.util.Optional.ofNullable(stockCode))
                           .queryParamIfPresent("fromDate", java.util.Optional.ofNullable(from))
                           .queryParamIfPresent("toDate", java.util.Optional.ofNullable(to))
                           .queryParam("page", page)
                           .queryParam("size", size)
-                          .build())
-              .header("Authorization", authorization)
+                          .build(accountId))
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
       return response.getData();
@@ -128,13 +126,12 @@ public class TransactionServerClient {
   // 주문 상세 조회
   // ───────────────────────────────────────────────
 
-  public OrderDetailItem getOrderDetail(String authorization, Long orderId) {
+  public OrderDetailItem getOrderDetail(Long orderId) {
     try {
       TxResponse<OrderDetailItem> response =
           transactionServerRestClient
               .get()
-              .uri("/baas/v1/stocks/orders/{orderId}", orderId)
-              .header("Authorization", authorization)
+              .uri("/baas/v1/stock/orders/{orderId}", orderId)
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
       return response.getData();
@@ -148,7 +145,7 @@ public class TransactionServerClient {
   // ───────────────────────────────────────────────
 
   public TxPageData<OrderListItem> getOrders(
-      String authorization, String status, String orderType, int page, int size) {
+      Long accountId, String status, String orderType, int page, int size) {
     try {
       TxResponse<TxPageData<OrderListItem>> response =
           transactionServerRestClient
@@ -156,13 +153,13 @@ public class TransactionServerClient {
               .uri(
                   uriBuilder ->
                       uriBuilder
-                          .path("/baas/v1/stocks/orders")
+                          .path("/baas/v1/stock/accounts/{accountId}/orders")
                           .queryParamIfPresent("status", java.util.Optional.ofNullable(status))
-                          .queryParamIfPresent("orderType", java.util.Optional.ofNullable(orderType))
+                          .queryParamIfPresent(
+                              "orderType", java.util.Optional.ofNullable(orderType))
                           .queryParam("page", page)
                           .queryParam("size", size)
-                          .build())
-              .header("Authorization", authorization)
+                          .build(accountId))
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
       return response.getData();
@@ -175,15 +172,12 @@ public class TransactionServerClient {
   // 주문 취소
   // ───────────────────────────────────────────────
 
-  public OrderCancelItem cancelOrder(
-      String authorization, String pinToken, String idempotencyKey, Long orderId) {
+  public OrderCancelItem cancelOrder(String idempotencyKey, Long orderId) {
     try {
       TxResponse<OrderCancelItem> response =
           transactionServerRestClient
               .post()
-              .uri("/baas/v1/stocks/orders/{orderId}/cancel", orderId)
-              .header("Authorization", authorization)
-              .header("Pin-Token", pinToken)
+              .uri("/baas/v1/stock/orders/{orderId}/cancel", orderId)
               .header("Idempotency-Key", idempotencyKey)
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
@@ -198,15 +192,14 @@ public class TransactionServerClient {
   // ───────────────────────────────────────────────
 
   public OrderItem createOrder(
-      String authorization, String pinToken, String idempotencyKey,
+      String idempotencyKey,
+      Long accountId,
       com.service.domain.stock.dto.request.OrderCreateRequest request) {
     try {
       TxResponse<OrderItem> response =
           transactionServerRestClient
               .post()
-              .uri("/baas/v1/stocks/orders")
-              .header("Authorization", authorization)
-              .header("Pin-Token", pinToken)
+              .uri("/baas/v1/stock/accounts/{accountId}/orders", accountId)
               .header("Idempotency-Key", idempotencyKey)
               .body(request)
               .retrieve()
@@ -221,13 +214,12 @@ public class TransactionServerClient {
   // 예수금 조회
   // ───────────────────────────────────────────────
 
-  public CashBalanceItem getCashBalance(String authorization) {
+  public CashBalanceItem getCashBalance(Long accountId) {
     try {
       TxResponse<CashBalanceItem> response =
           transactionServerRestClient
               .get()
-              .uri("/baas/v1/stocks/cash-balance")
-              .header("Authorization", authorization)
+              .uri("/baas/v1/stock/accounts/{accountId}/cash-balance", accountId)
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
       return response.getData();
@@ -240,13 +232,12 @@ public class TransactionServerClient {
   // 주문 가능 계좌 조회
   // ───────────────────────────────────────────────
 
-  public List<StockAccountItem> getStockAccounts(String authorization) {
+  public List<StockAccountItem> getStockAccounts() {
     try {
       TxResponse<TxContentData<StockAccountItem>> response =
           transactionServerRestClient
               .get()
-              .uri("/baas/v1/stocks/accounts")
-              .header("Authorization", authorization)
+              .uri("/baas/v1/stock/accounts")
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
       return response.getData().getContent();
@@ -256,8 +247,37 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 현재가 조회 (관심종목 내부 사용)
+  // ───────────────────────────────────────────────
+
+  public StockPriceItem getStockPrice(String stockCode) {
+    try {
+      TxResponse<StockPriceItem> response =
+          transactionServerRestClient
+              .get()
+              .uri("/baas/v1/stock/{stockCode}/price", stockCode)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  // ───────────────────────────────────────────────
   // 종목 관련 내부 타입
   // ───────────────────────────────────────────────
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class StockPriceItem {
+    private String stockCode;
+    private String stockName;
+    private java.math.BigDecimal currentPrice;
+    private java.math.BigDecimal changeRate;
+    private java.time.LocalDateTime updatedAt;
+  }
 
   @Getter
   @NoArgsConstructor
@@ -382,13 +402,17 @@ public class TransactionServerClient {
   // 포트폴리오 조회
   // ───────────────────────────────────────────────
 
-  public PortfolioItem getPortfolio(String authorization) {
+  public PortfolioItem getPortfolio(Long accountId) {
     try {
       TxResponse<PortfolioItem> response =
           transactionServerRestClient
               .get()
-              .uri("/baas/v1/total/portfolio")
-              .header("Authorization", authorization)
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path("/baas/v1/total/portfolio")
+                          .queryParam("accountId", accountId)
+                          .build())
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
       return response.getData();

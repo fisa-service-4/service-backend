@@ -38,7 +38,7 @@ public class FavoriteStockService {
     favoriteStockRepository.delete(entity);
   }
 
-  public FavoriteStockListResponse getFavorites(Long userId, String authorization) {
+  public FavoriteStockListResponse getFavorites(Long userId) {
     List<FavoriteStock> favorites = favoriteStockRepository.findAllByUserId(userId);
     List<FavoriteStockItem> items =
         favorites.stream()
@@ -46,7 +46,7 @@ public class FavoriteStockService {
                 f ->
                     FavoriteStockItem.of(
                         f.getFavoriteStockId(),
-                        transactionServerClient.getStockPrice(authorization, f.getStockCode())))
+                        transactionServerClient.getStockPrice(f.getStockCode())))
             .toList();
     return FavoriteStockListResponse.builder().favorites(items).build();
   }

@@ -11,14 +11,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class OrderCreateRequest {
 
-  @NotBlank
-  private String stockCode;
+  @NotBlank private String stockCode;
 
-  @NotBlank
-  private String orderType;
+  @NotBlank private String orderType;
 
-  @NotBlank
-  private String orderMethod;
+  @NotBlank private String orderMethod;
 
   @NotNull
   @Min(1)

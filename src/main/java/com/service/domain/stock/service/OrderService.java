@@ -15,26 +15,19 @@ public class OrderService {
 
   private final TransactionServerClient transactionServerClient;
 
-  public OrderResponse createOrder(
-      String authorization, String pinToken, String idempotencyKey,
-      OrderCreateRequest request) {
-    return OrderResponse.from(
-        transactionServerClient.createOrder(authorization, pinToken, idempotencyKey, request));
+  public OrderResponse createOrder(String idempotencyKey, Long accountId, OrderCreateRequest request) {
+    return OrderResponse.from(transactionServerClient.createOrder(idempotencyKey, accountId, request));
   }
 
-  public OrderDetailResponse getOrderDetail(String authorization, Long orderId) {
-    return OrderDetailResponse.from(transactionServerClient.getOrderDetail(authorization, orderId));
+  public OrderDetailResponse getOrderDetail(Long orderId) {
+    return OrderDetailResponse.from(transactionServerClient.getOrderDetail(orderId));
   }
 
-  public OrderListResponse getOrders(
-      String authorization, String status, String orderType, int page, int size) {
-    return OrderListResponse.from(
-        transactionServerClient.getOrders(authorization, status, orderType, page, size));
+  public OrderListResponse getOrders(Long accountId, String status, String orderType, int page, int size) {
+    return OrderListResponse.from(transactionServerClient.getOrders(accountId, status, orderType, page, size));
   }
 
-  public OrderCancelResponse cancelOrder(
-      String authorization, String pinToken, String idempotencyKey, Long orderId) {
-    return OrderCancelResponse.from(
-        transactionServerClient.cancelOrder(authorization, pinToken, idempotencyKey, orderId));
+  public OrderCancelResponse cancelOrder(String idempotencyKey, Long orderId) {
+    return OrderCancelResponse.from(transactionServerClient.cancelOrder(idempotencyKey, orderId));
   }
 }

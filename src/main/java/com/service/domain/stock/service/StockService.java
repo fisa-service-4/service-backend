@@ -12,12 +12,11 @@ public class StockService {
 
   private final TransactionServerClient transactionServerClient;
 
-  public CashBalanceResponse getCashBalance(String authorization) {
-    return CashBalanceResponse.from(transactionServerClient.getCashBalance(authorization));
+  public CashBalanceResponse getCashBalance(Long accountId) {
+    return CashBalanceResponse.from(transactionServerClient.getCashBalance(accountId));
   }
 
-  public StockAccountsResponse getStockAccounts(String authorization) {
-    return StockAccountsResponse.from(transactionServerClient.getStockAccounts(authorization));
+  public StockAccountsResponse getStockAccounts() {
+    return StockAccountsResponse.from(transactionServerClient.getStockAccounts());
   }
-
 }

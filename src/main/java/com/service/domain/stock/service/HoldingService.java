@@ -12,11 +12,11 @@ public class HoldingService {
 
   private final TransactionServerClient transactionServerClient;
 
-  public HoldingListResponse getHoldings(String authorization) {
-    return HoldingListResponse.from(transactionServerClient.getHoldings(authorization));
+  public HoldingListResponse getHoldings(Long accountId) {
+    return HoldingListResponse.from(transactionServerClient.getHoldings(accountId));
   }
 
-  public HoldingReturnsResponse getReturns(String authorization) {
-    return HoldingReturnsResponse.from(transactionServerClient.getReturns(authorization));
+  public HoldingReturnsResponse getReturns(Long accountId) {
+    return HoldingReturnsResponse.from(transactionServerClient.getReturns(accountId));
   }
 }

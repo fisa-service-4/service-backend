@@ -11,7 +11,7 @@ public class PortfolioService {
 
   private final TransactionServerClient transactionServerClient;
 
-  public PortfolioResponse getPortfolio(String authorization) {
-    return PortfolioResponse.from(transactionServerClient.getPortfolio(authorization));
+  public PortfolioResponse getPortfolio(Long accountId) {
+    return PortfolioResponse.from(transactionServerClient.getPortfolio(accountId));
   }
 }
