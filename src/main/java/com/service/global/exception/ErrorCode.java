@@ -37,6 +37,7 @@ public enum ErrorCode {
   VIRTUAL_SALARY_001(HttpStatus.NOT_FOUND, "VIRTUAL_SALARY_001", "가상월급 설정이 없습니다."),
   VIRTUAL_SALARY_002(
       HttpStatus.BAD_REQUEST, "VIRTUAL_SALARY_002", "투자 비율과 비상금 비율의 합은 100을 초과할 수 없습니다."),
+  VIRTUAL_SALARY_003(HttpStatus.NOT_FOUND, "VIRTUAL_SALARY_003", "SALARY 계좌가 연결되어 있지 않습니다."),
 
   // VALID
   VALID_001(HttpStatus.BAD_REQUEST, "VALID_001", "입력값이 올바르지 않습니다.");
