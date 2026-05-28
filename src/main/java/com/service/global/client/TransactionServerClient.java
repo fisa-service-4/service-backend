@@ -19,25 +19,6 @@ public class TransactionServerClient {
   private final RestClient transactionServerRestClient;
 
   // ───────────────────────────────────────────────
-  // 종목 검색
-  // ───────────────────────────────────────────────
-
-  public List<StockItem> searchStocks(String authorization, String keyword) {
-    try {
-      TxResponse<TxContentData<StockItem>> response =
-          transactionServerRestClient
-              .get()
-              .uri("/baas/v1/stocks/search?keyword={keyword}", keyword)
-              .header("Authorization", authorization)
-              .retrieve()
-              .body(new ParameterizedTypeReference<>() {});
-      return response.getData().getContent();
-    } catch (RestClientResponseException e) {
-      throw mapError(e);
-    }
-  }
-
-  // ───────────────────────────────────────────────
   // 공통 내부 타입
   // ───────────────────────────────────────────────
 
@@ -275,88 +256,8 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
-  // 차트 조회
-  // ───────────────────────────────────────────────
-
-  public List<CandleItem> getStockChart(
-      String authorization, String stockCode, String interval, String from, String to) {
-    try {
-      TxResponse<TxContentData<CandleItem>> response =
-          transactionServerRestClient
-              .get()
-              .uri(
-                  uriBuilder ->
-                      uriBuilder
-                          .path("/baas/v1/stocks/{stockCode}/charts")
-                          .queryParam("interval", interval)
-                          .queryParamIfPresent("fromDate", java.util.Optional.ofNullable(from))
-                          .queryParamIfPresent("toDate", java.util.Optional.ofNullable(to))
-                          .build(stockCode))
-              .header("Authorization", authorization)
-              .retrieve()
-              .body(new ParameterizedTypeReference<>() {});
-      return response.getData().getContent();
-    } catch (RestClientResponseException e) {
-      throw mapError(e);
-    }
-  }
-
-  // ───────────────────────────────────────────────
-  // 현재가 조회
-  // ───────────────────────────────────────────────
-
-  public StockPriceItem getStockPrice(String authorization, String stockCode) {
-    try {
-      TxResponse<StockPriceItem> response =
-          transactionServerRestClient
-              .get()
-              .uri("/baas/v1/stocks/{stockCode}/price", stockCode)
-              .header("Authorization", authorization)
-              .retrieve()
-              .body(new ParameterizedTypeReference<>() {});
-      return response.getData();
-    } catch (RestClientResponseException e) {
-      throw mapError(e);
-    }
-  }
-
-  // ───────────────────────────────────────────────
   // 종목 관련 내부 타입
   // ───────────────────────────────────────────────
-
-  @Getter
-  @NoArgsConstructor
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class StockItem {
-    private String stockCode;
-    private String stockName;
-    private String market;
-    private java.math.BigDecimal currentPrice;
-    private java.math.BigDecimal changeRate;
-  }
-
-  @Getter
-  @NoArgsConstructor
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class StockPriceItem {
-    private String stockCode;
-    private String stockName;
-    private java.math.BigDecimal currentPrice;
-    private java.math.BigDecimal changeRate;
-    private java.time.LocalDateTime updatedAt;
-  }
-
-  @Getter
-  @NoArgsConstructor
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class CandleItem {
-    private String date;
-    private java.math.BigDecimal open;
-    private java.math.BigDecimal high;
-    private java.math.BigDecimal low;
-    private java.math.BigDecimal close;
-    private Long volume;
-  }
 
   @Getter
   @NoArgsConstructor
