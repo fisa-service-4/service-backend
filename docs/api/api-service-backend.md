@@ -691,11 +691,11 @@
 
 ---
 
-# 5-1. 계좌 관리 API
+# 5. 계좌 관리 API
 
 ---
 
-## 계좌 역할 설정
+## 5-1. 계좌 역할 설정
 
 **PATCH** `/accounts/{accountId}/role` | Bearer Token 필요
 
@@ -820,22 +820,27 @@
 
 ---
 
-## 5-5. 거래내역 조회
+## 5-4. 거래 내역 조회
 
-**GET** `/accounts/{accountId}/transactions` | Bearer Token 필요
+**GET** `/accounts/{accountId}/transactions`
 
-**Query Parameters**
+### Query Parameters
 
-| 이름 | 타입    | 필수 | 설명                      |
-| ---- | ------- | ---- | ------------------------- |
-| from | Date    | X    | 조회 시작일 (YYYY-MM-DD)  |
-| to   | Date    | X    | 조회 종료일 (YYYY-MM-DD)  |
-| page | Integer | X    | 페이지 번호 (default: 0)  |
-| size | Integer | X    | 페이지 크기 (default: 20) |
+| 이름      | 타입    | 필수 | 설명                                                            |
+| --------- | ------- | ---- | --------------------------------------------------------------- |
+| type      | String  | X    | DEPOSIT / WITHDRAW / TRANSFER_IN / TRANSFER_OUT / AUTO_TRANSFER |
+| channel   | String  | X    | APP / AI_AGENT                                                  |
+| status    | String  | X    | SUCCESS / FAILED / CANCELLED                                    |
+| fromDate  | Date    | X    | 조회 시작일 (YYYY-MM-DD)                                        |
+| toDate    | Date    | X    | 조회 종료일 (YYYY-MM-DD)                                        |
+| minAmount | Decimal | X    | 최소 거래 금액                                                  |
+| maxAmount | Decimal | X    | 최대 거래 금액                                                  |
+| page      | Integer | X    | 페이지 번호 (기본값: 0)                                         |
+| size      | Integer | X    | 페이지 크기 (기본값: 20)                                        |
 
-**Response** `200 OK`
+### Response `200 OK`
 
-```json
+```json id="0h2drx"
 {
   "success": true,
   "data": {
@@ -846,6 +851,7 @@
         "transactionCategory": "급여",
         "amount": 3000000,
         "balanceAfter": 3500000,
+        "transactionChannel": "APP",
         "transactionStatus": "SUCCESS",
         "transactionAt": "2026-05-01T09:00:00"
       }
@@ -855,65 +861,13 @@
     "totalElements": 42,
     "totalPages": 3
   },
-  "meta": { "traceId": "uuid" }
+  "meta": {
+    "traceId": "uuid"
+  }
 }
 ```
 
-| 상황           | 코드        | 메시지                       |
-| -------------- | ----------- | ---------------------------- |
-| 날짜 형식 오류 | VALID_001   | 입력값이 올바르지 않습니다   |
-| 계좌 없음      | ACCOUNT_001 | 해당 계좌를 찾을 수 없습니다 |
-| 접근 불가      | ACCOUNT_002 | 본인 계좌가 아닙니다         |
-
----
-
-## 5-6. 거래내역 필터 조회
-
-**GET** `/accounts/{accountId}/transactions/filter` | Bearer Token 필요
-
-**Query Parameters**
-
-| 이름      | 타입    | 필수 | 설명                                                            |
-| --------- | ------- | ---- | --------------------------------------------------------------- |
-| type      | String  | X    | DEPOSIT / WITHDRAW / TRANSFER_IN / TRANSFER_OUT / AUTO_TRANSFER |
-| channel   | String  | X    | APP / AI_AGENT                                                  |
-| status    | String  | X    | SUCCESS / FAILED / CANCELLED                                    |
-| from      | Date    | X    | 조회 시작일 (YYYY-MM-DD)                                        |
-| to        | Date    | X    | 조회 종료일 (YYYY-MM-DD)                                        |
-| minAmount | Decimal | X    | 최소 거래 금액                                                  |
-| maxAmount | Decimal | X    | 최대 거래 금액                                                  |
-| page      | Integer | X    | 페이지 번호 (default: 0)                                        |
-| size      | Integer | X    | 페이지 크기 (default: 20)                                       |
-
-**Response** `200 OK`
-
-```json
-{
-  "success": true,
-  "data": {
-    "content": [
-      {
-        "transactionId": 9005,
-        "transactionType": "WITHDRAW",
-        "transactionCategory": "식비",
-        "amount": 50000,
-        "balanceAfter": 3450000,
-        "transactionChannel": "APP",
-        "transactionStatus": "SUCCESS",
-        "transactionAt": "2026-05-10T13:22:00"
-      }
-    ],
-    "page": 0,
-    "size": 20,
-    "totalElements": 5,
-    "totalPages": 1
-  },
-  "meta": { "traceId": "uuid" }
-}
-```
-
-````
-## 5-7. 거래 카테고리 조회
+## 5-5. 거래 카테고리 조회
 **GET** `/accounts/{accountId}/transactions/categories` | Bearer Token 필요
 
 **Query Parameters**
