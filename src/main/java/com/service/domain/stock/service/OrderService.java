@@ -15,16 +15,20 @@ public class OrderService {
 
   private final TransactionServerClient transactionServerClient;
 
-  public OrderResponse createOrder(String idempotencyKey, Long accountId, OrderCreateRequest request) {
-    return OrderResponse.from(transactionServerClient.createOrder(idempotencyKey, accountId, request));
+  public OrderResponse createOrder(
+      String idempotencyKey, Long accountId, OrderCreateRequest request) {
+    return OrderResponse.from(
+        transactionServerClient.createOrder(idempotencyKey, accountId, request));
   }
 
   public OrderDetailResponse getOrderDetail(Long orderId) {
     return OrderDetailResponse.from(transactionServerClient.getOrderDetail(orderId));
   }
 
-  public OrderListResponse getOrders(Long accountId, String status, String orderType, int page, int size) {
-    return OrderListResponse.from(transactionServerClient.getOrders(accountId, status, orderType, page, size));
+  public OrderListResponse getOrders(
+      Long accountId, String status, String orderType, int page, int size) {
+    return OrderListResponse.from(
+        transactionServerClient.getOrders(accountId, status, orderType, page, size));
   }
 
   public OrderCancelResponse cancelOrder(String idempotencyKey, Long orderId) {

@@ -34,9 +34,7 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
     LocalDateTime fromDateTime = from != null ? from.atStartOfDay() : null;
     LocalDateTime toDateTime = to != null ? to.atTime(LocalTime.MAX) : null;
 
-    return paymentMatchingRepository
-        .findAllByFilters(userId)
-        .stream()
+    return paymentMatchingRepository.findAllByFilters(userId).stream()
         .filter(pm -> contractId == null || pm.getContract().getContractId().equals(contractId))
         .filter(pm -> matchingStatus == null || pm.getMatchingStatus() == matchingStatus)
         .filter(
