@@ -31,6 +31,7 @@ public class VirtualSalarySettingServiceImpl implements VirtualSalarySettingServ
     return VirtualSalarySettingResponse.builder()
         .targetSalary(setting.getTargetSalary())
         .payday(setting.getPayday())
+        .emergencyTargetAmount(setting.getEmergencyTargetAmount())
         .investmentRatio(setting.getInvestmentRatio())
         .emergencyRatio(setting.getEmergencyRatio())
         .priorityOrder(setting.getPriorityOrder())
@@ -50,6 +51,7 @@ public class VirtualSalarySettingServiceImpl implements VirtualSalarySettingServ
           .update(
               request.getTargetSalary(),
               request.getPayday(),
+              request.getEmergencyTargetAmount(),
               request.getInvestmentRatio(),
               request.getEmergencyRatio(),
               request.getPriorityOrder());
@@ -59,6 +61,7 @@ public class VirtualSalarySettingServiceImpl implements VirtualSalarySettingServ
               .userId(userId)
               .targetSalary(request.getTargetSalary())
               .payday(request.getPayday())
+              .emergencyTargetAmount(request.getEmergencyTargetAmount())
               .investmentRatio(request.getInvestmentRatio())
               .emergencyRatio(request.getEmergencyRatio())
               .priorityOrder(request.getPriorityOrder())

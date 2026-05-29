@@ -161,17 +161,20 @@ CREATE TABLE IF NOT EXISTS PAYMENT_MATCHING
 
 CREATE TABLE IF NOT EXISTS VIRTUAL_SALARY_SETTING
 (
-    user_id           BIGINT         PRIMARY KEY,
-    target_salary     DECIMAL(18, 2) NOT NULL,
-    payday            INT            NOT NULL,
-    investment_ratio  DECIMAL(5, 2),
-    emergency_ratio   DECIMAL(5, 2),
-    priority_order    JSONB,
-    updated_at        TIMESTAMP      NOT NULL,
+    user_id                  BIGINT         PRIMARY KEY,
+    target_salary            DECIMAL(18, 2) NOT NULL,
+    payday                   INT            NOT NULL,
+    emergency_target_amount  DECIMAL(18, 2),
+    investment_ratio         DECIMAL(5, 2),
+    emergency_ratio          DECIMAL(5, 2),
+    priority_order           JSONB,
+    updated_at               TIMESTAMP      NOT NULL,
 
     CONSTRAINT fk_virtual_salary_user
         FOREIGN KEY (user_id) REFERENCES USERS (user_id)
 );
+
+ALTER TABLE VIRTUAL_SALARY_SETTING ADD COLUMN IF NOT EXISTS emergency_target_amount DECIMAL(18, 2);
 
 CREATE TABLE IF NOT EXISTS FAVORITE_STOCK
 (

@@ -36,6 +36,9 @@ public class VirtualSalarySetting {
   @Column(name = "payday", nullable = false)
   private Integer payday;
 
+  @Column(name = "emergency_target_amount", precision = 18, scale = 2)
+  private BigDecimal emergencyTargetAmount;
+
   @Column(name = "investment_ratio", precision = 5, scale = 2)
   private BigDecimal investmentRatio;
 
@@ -52,11 +55,13 @@ public class VirtualSalarySetting {
   public void update(
       BigDecimal targetSalary,
       Integer payday,
+      BigDecimal emergencyTargetAmount,
       BigDecimal investmentRatio,
       BigDecimal emergencyRatio,
       List<VirtualSalaryCategory> priorityOrder) {
     this.targetSalary = targetSalary;
     this.payday = payday;
+    this.emergencyTargetAmount = emergencyTargetAmount;
     this.investmentRatio = investmentRatio;
     this.emergencyRatio = emergencyRatio;
     this.priorityOrder = priorityOrder;
