@@ -399,50 +399,6 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
-  // 포트폴리오 조회
-  // ───────────────────────────────────────────────
-
-  public PortfolioItem getPortfolio(Long accountId) {
-    try {
-      TxResponse<PortfolioItem> response =
-          transactionServerRestClient
-              .get()
-              .uri(
-                  uriBuilder ->
-                      uriBuilder
-                          .path("/baas/v1/total/portfolio")
-                          .queryParam("accountId", accountId)
-                          .build())
-              .retrieve()
-              .body(new ParameterizedTypeReference<>() {});
-      return response.getData();
-    } catch (RestClientResponseException e) {
-      throw mapError(e);
-    }
-  }
-
-  @Getter
-  @NoArgsConstructor
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class PortfolioItem {
-    private java.math.BigDecimal totalAsset;
-    private java.math.BigDecimal cashAsset;
-    private java.math.BigDecimal stockAsset;
-    private java.math.BigDecimal savingAsset;
-    private java.math.BigDecimal availableCash;
-    private PortfolioRatio assetRatio;
-  }
-
-  @Getter
-  @NoArgsConstructor
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class PortfolioRatio {
-    private Integer cash;
-    private Integer stock;
-    private Integer saving;
-  }
-
-  // ───────────────────────────────────────────────
   // 에러 처리
   // ───────────────────────────────────────────────
 
