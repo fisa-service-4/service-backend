@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentMatchingServiceImpl implements PaymentMatchingService {
 
   private final PaymentMatchingRepository paymentMatchingRepository;
+  private final AutoDistributionService autoDistributionService;
 
   @Override
   @Transactional(readOnly = true)
@@ -60,6 +61,8 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
 
     matching.applyManualMatch(request.getBankTransactionId());
     matching.getContract().updateContractStatus(ContractStatus.PAID);
+
+    autoDistributionService.distribute(userId, matching.getMatchingId());
 
     return ManualMatchingResponse.builder()
         .matchingId(matching.getMatchingId())
