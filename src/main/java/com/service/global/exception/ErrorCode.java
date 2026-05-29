@@ -39,6 +39,16 @@ public enum ErrorCode {
       HttpStatus.BAD_REQUEST, "VIRTUAL_SALARY_002", "투자 비율과 비상금 비율의 합은 100을 초과할 수 없습니다."),
   VIRTUAL_SALARY_003(HttpStatus.NOT_FOUND, "VIRTUAL_SALARY_003", "SALARY 계좌가 연결되어 있지 않습니다."),
 
+  // MATCHING
+  MATCHING_001(HttpStatus.NOT_FOUND, "MATCHING_001", "매칭 정보를 찾을 수 없습니다."),
+  MATCHING_002(HttpStatus.BAD_REQUEST, "MATCHING_002", "이미 매칭 처리된 건입니다."),
+  MATCHING_003(HttpStatus.BAD_REQUEST, "MATCHING_003", "matchedBy는 USER만 허용됩니다."),
+
+  // AI
+  AI_001(HttpStatus.INTERNAL_SERVER_ERROR, "AI_001", "AI 응답 생성에 실패했습니다."),
+  AI_002(HttpStatus.GATEWAY_TIMEOUT, "AI_002", "AI 서버 응답 시간이 초과되었습니다."),
+  AI_003(HttpStatus.INTERNAL_SERVER_ERROR, "AI_003", "AI 실행에 실패했습니다."),
+
   // VALID
   VALID_001(HttpStatus.BAD_REQUEST, "VALID_001", "입력값이 올바르지 않습니다."),
 

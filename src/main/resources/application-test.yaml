@@ -37,3 +37,7 @@ firebase:
 mydata:
   server:
     url: http://mydata-server:8084/mydata/v1
+
+ai:
+  server:
+    url: http://ai-server:8080/api/v1/ai

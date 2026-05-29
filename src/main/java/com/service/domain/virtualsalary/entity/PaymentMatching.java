@@ -23,7 +23,7 @@ public class PaymentMatching {
   @JoinColumn(name = "contract_id", nullable = false)
   private Contract contract;
 
-  @Column(name = "bank_transaction_id", nullable = false)
+  @Column(name = "bank_transaction_id")
   private Long bankTransactionId;
 
   @Enumerated(EnumType.STRING)
@@ -36,4 +36,11 @@ public class PaymentMatching {
 
   @Column(name = "matched_at")
   private LocalDateTime matchedAt;
+
+  public void applyManualMatch(Long bankTransactionId) {
+    this.bankTransactionId = bankTransactionId;
+    this.matchingStatus = MatchingStatus.MANUAL_MATCHED;
+    this.matchedBy = MatchedBy.USER;
+    this.matchedAt = LocalDateTime.now();
+  }
 }

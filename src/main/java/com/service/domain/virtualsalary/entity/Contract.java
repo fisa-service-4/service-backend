@@ -62,6 +62,10 @@ public class Contract {
   @OneToMany(mappedBy = "contract", fetch = FetchType.LAZY)
   private List<PaymentMatching> paymentMatchings = new ArrayList<>();
 
+  public void updateContractStatus(ContractStatus status) {
+    this.contractStatus = status;
+  }
+
   public void assignSettlement(ContractSettlement settlement) {
     this.settlement = settlement;
 
