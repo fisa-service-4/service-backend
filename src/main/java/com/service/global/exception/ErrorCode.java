@@ -50,7 +50,26 @@ public enum ErrorCode {
   AI_003(HttpStatus.INTERNAL_SERVER_ERROR, "AI_003", "AI 실행에 실패했습니다."),
 
   // VALID
-  VALID_001(HttpStatus.BAD_REQUEST, "VALID_001", "입력값이 올바르지 않습니다.");
+  VALID_001(HttpStatus.BAD_REQUEST, "VALID_001", "입력값이 올바르지 않습니다."),
+
+  // ACCOUNT
+  ACCOUNT_001(HttpStatus.NOT_FOUND, "ACCOUNT_001", "해당 계좌를 찾을 수 없습니다."),
+  ACCOUNT_002(HttpStatus.FORBIDDEN, "ACCOUNT_002", "본인 계좌가 아닙니다."),
+  ACCOUNT_003(HttpStatus.BAD_REQUEST, "ACCOUNT_003", "계좌 상태가 유효하지 않습니다."),
+
+  // TRANSFER
+  TRANSFER_001(HttpStatus.NOT_FOUND, "TRANSFER_001", "해당 이체 건을 찾을 수 없습니다."),
+  TRANSFER_002(HttpStatus.BAD_REQUEST, "TRANSFER_002", "잔액이 부족합니다."),
+  TRANSFER_003(HttpStatus.CONFLICT, "TRANSFER_003", "이미 처리 완료된 이체입니다."),
+  TRANSFER_004(HttpStatus.FORBIDDEN, "TRANSFER_004", "본인 이체 건이 아닙니다."),
+
+  // ORDER
+  ORDER_001(HttpStatus.BAD_REQUEST, "ORDER_001", "주문 가능 금액이 부족합니다."),
+  ORDER_002(HttpStatus.BAD_REQUEST, "ORDER_002", "보유 수량이 부족합니다."),
+
+  // STOCK
+  STOCK_001(HttpStatus.NOT_FOUND, "STOCK_001", "증권 계좌를 찾을 수 없습니다."),
+  STOCK_002(HttpStatus.CONFLICT, "STOCK_002", "이미 등록된 관심종목입니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
