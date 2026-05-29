@@ -62,8 +62,6 @@
 | MATCHING_001    | 404         | 매칭 정보 없음              |
 | MATCHING_002    | 409         | 이미 매칭 처리된 건           |
 | MATCHING_003    | 400         | matchedBy는 USER만 허용   |
-| CONTRACT_001    | 404         | 계약 없음                 |
-| CONTRACT_002    | 403         | 본인 계약이 아닌 경우 접근 불가    |
 
 ---
 
@@ -82,6 +80,7 @@
 | EXECUTION_001      | 404         | 체결 내역 없음       |
 | HOLDING_001        | 404         | 보유 종목 없음       |
 | FAVORITE_001       | 404         | 관심종목 없음        |
+| FAVORITE_002       | 404         | 이미 등록된 관심 종목  |
 | VIRTUAL_SALARY_001 | 400         | 비율 합계 오류       |
 
 ---
