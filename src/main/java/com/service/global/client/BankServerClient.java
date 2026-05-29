@@ -23,17 +23,17 @@ public class BankServerClient {
   @Value("${mydata.server.url}")
   private String mydataServerUrl;
 
-  public List<BankAccountItem> getBankAccounts(Long userId) {
+  public List<BankAccountItem> getBankAccounts(String firebaseUid) {
     String url = mydataServerUrl + "/bank/accounts";
     HttpHeaders headers = new HttpHeaders();
-    headers.set("X-User-Id", String.valueOf(userId));
+    headers.set("X-Firebase-Uid", firebaseUid);
     ResponseEntity<BankAccountListWrapper> response =
         restTemplate.exchange(
             url, HttpMethod.GET, new HttpEntity<>(headers), new ParameterizedTypeReference<>() {});
 
     BankAccountListWrapper body = response.getBody();
     if (body == null || !body.isSuccess() || body.getData() == null) {
-      throw new RuntimeException("mydata-server 계좌 목록 조회 실패: userId=" + userId);
+      throw new RuntimeException("mydata-server 계좌 목록 조회 실패: firebaseUid=" + firebaseUid);
     }
     return body.getData().getContent();
   }

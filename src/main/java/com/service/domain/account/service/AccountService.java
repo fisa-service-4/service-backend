@@ -7,6 +7,8 @@ import com.service.domain.mydata.entity.AccountMapping;
 import com.service.domain.mydata.entity.LinkedFinancialAccount;
 import com.service.domain.mydata.repository.AccountMappingRepository;
 import com.service.domain.mydata.repository.LinkedFinancialAccountRepository;
+import com.service.domain.user.entity.User;
+import com.service.domain.user.repository.UserRepository;
 import com.service.global.client.BankServerClient;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
@@ -26,10 +28,16 @@ public class AccountService {
   private final LinkedFinancialAccountRepository linkedFinancialAccountRepository;
   private final AccountMappingRepository accountMappingRepository;
   private final BankServerClient bankServerClient;
+  private final UserRepository userRepository;
 
   @Transactional(readOnly = true)
   public List<AccountListResponse> getMyAccounts(Long userId) {
-    List<BankServerClient.BankAccountItem> bankAccounts = bankServerClient.getBankAccounts(userId);
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_001));
+    List<BankServerClient.BankAccountItem> bankAccounts =
+        bankServerClient.getBankAccounts(user.getFirebaseUid());
 
     Map<Long, AccountMapping.MappingType> roleMap =
         accountMappingRepository.findByUserId(userId).stream()
