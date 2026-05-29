@@ -10,4 +10,6 @@ public interface FavoriteStockRepository extends JpaRepository<FavoriteStock, Lo
   List<FavoriteStock> findAllByUserId(Long userId);
 
   Optional<FavoriteStock> findByFavoriteStockIdAndUserId(Long favoriteStockId, Long userId);
+
+  boolean existsByUserIdAndStockCode(Long userId, String stockCode);
 }

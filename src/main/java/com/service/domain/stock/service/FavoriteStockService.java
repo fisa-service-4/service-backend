@@ -24,6 +24,9 @@ public class FavoriteStockService {
 
   @Transactional
   public FavoriteStockAddResponse addFavorite(Long userId, FavoriteStockAddRequest request) {
+    if (favoriteStockRepository.existsByUserIdAndStockCode(userId, request.getStockCode())) {
+      throw new BusinessException(ErrorCode.STOCK_002);
+    }
     FavoriteStock entity =
         FavoriteStock.builder().userId(userId).stockCode(request.getStockCode()).build();
     return FavoriteStockAddResponse.from(favoriteStockRepository.save(entity));

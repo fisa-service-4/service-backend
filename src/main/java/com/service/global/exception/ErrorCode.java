@@ -58,7 +58,8 @@ public enum ErrorCode {
   ORDER_002(HttpStatus.BAD_REQUEST, "ORDER_002", "보유 수량이 부족합니다."),
 
   // STOCK
-  STOCK_001(HttpStatus.NOT_FOUND, "STOCK_001", "증권 계좌를 찾을 수 없습니다.");
+  STOCK_001(HttpStatus.NOT_FOUND, "STOCK_001", "증권 계좌를 찾을 수 없습니다."),
+  STOCK_002(HttpStatus.CONFLICT, "STOCK_002", "이미 등록된 관심종목입니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
