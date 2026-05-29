@@ -35,4 +35,8 @@ public class AccountMapping {
     STOCK,
     EMERGENCY
   }
+
+  public void updateMappingType(MappingType mappingType) {
+    this.mappingType = mappingType;
+  }
 }
