@@ -76,7 +76,6 @@ public class FavoriteStockController {
   public ResponseEntity<ApiResponse<FavoriteStockListResponse>> getFavorites(
       Authentication authentication) {
     Long userId = (Long) authentication.getPrincipal();
-    return ResponseEntity.ok(
-        ApiResponse.success(favoriteStockService.getFavorites(userId)));
+    return ResponseEntity.ok(ApiResponse.success(favoriteStockService.getFavorites(userId)));
   }
 }

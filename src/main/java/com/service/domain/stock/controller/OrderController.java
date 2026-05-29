@@ -99,8 +99,7 @@ public class OrderController {
   })
   @PostMapping("/{orderId}/cancel")
   public ResponseEntity<ApiResponse<OrderCancelResponse>> cancelOrder(
-      @RequestHeader("Idempotency-Key") String idempotencyKey,
-      @PathVariable Long orderId) {
+      @RequestHeader("Idempotency-Key") String idempotencyKey, @PathVariable Long orderId) {
     return ResponseEntity.ok(
         ApiResponse.success(orderService.cancelOrder(idempotencyKey, orderId)));
   }
