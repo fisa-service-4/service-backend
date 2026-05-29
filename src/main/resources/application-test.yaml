@@ -33,3 +33,7 @@ jwt:
 
 firebase:
   credential-path: woorifis-service-firebase-adminsdk-fbsvc-bf3b482f03.json
+
+mydata:
+  server:
+    url: http://mydata-server:8084/mydata/v1

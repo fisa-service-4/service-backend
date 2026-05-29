@@ -5,9 +5,11 @@ import com.service.domain.virtualsalary.dto.request.VirtualSalarySettingRequest;
 import com.service.domain.virtualsalary.dto.response.ContractCreateResponse;
 import com.service.domain.virtualsalary.dto.response.ContractDetailResponse;
 import com.service.domain.virtualsalary.dto.response.ContractListResponse;
+import com.service.domain.virtualsalary.dto.response.VirtualSalaryDashboardResponse;
 import com.service.domain.virtualsalary.dto.response.VirtualSalarySaveResponse;
 import com.service.domain.virtualsalary.dto.response.VirtualSalarySettingResponse;
 import com.service.domain.virtualsalary.service.ContractService;
+import com.service.domain.virtualsalary.service.VirtualSalaryDashboardService;
 import com.service.domain.virtualsalary.service.VirtualSalarySettingService;
 import com.service.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,6 +39,7 @@ public class VirtualSalaryController {
 
   private final ContractService contractService;
   private final VirtualSalarySettingService virtualSalarySettingService;
+  private final VirtualSalaryDashboardService virtualSalaryDashboardService;
 
   @Operation(summary = "계약 생성", description = "프리랜서 계약 정보를 등록하고 세금 정산을 계산합니다.")
   @ApiResponses({
@@ -95,6 +98,31 @@ public class VirtualSalaryController {
     Long userId = (Long) authentication.getPrincipal();
     return ResponseEntity.ok(
         ApiResponse.success(contractService.getContractDetail(userId, contractId)));
+  }
+
+  // ─── Virtual Salary Dashboard ─────────────────────────────────────────────
+
+  @Operation(
+      summary = "가상월급 대시보드 조회",
+      description = "SALARY 계좌 잔액 기반으로 이번달 가상월급 사용 현황 및 D-DAY를 반환합니다.")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200",
+        description = "대시보드 조회 성공"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "401",
+        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "404",
+        description = "VIRTUAL_SALARY_001: 가상월급 설정 없음 | VIRTUAL_SALARY_003: SALARY 계좌 미연결")
+  })
+  @GetMapping("/virtual-salary/dashboard")
+  public ResponseEntity<ApiResponse<VirtualSalaryDashboardResponse>> getDashboard(
+      Authentication authentication) {
+
+    Long userId = (Long) authentication.getPrincipal();
+    return ResponseEntity.ok(
+        ApiResponse.success(virtualSalaryDashboardService.getDashboard(userId)));
   }
 
   // ─── Virtual Salary Setting ────────────────────────────────────────────────
