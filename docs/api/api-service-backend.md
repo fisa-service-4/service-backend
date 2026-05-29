@@ -822,7 +822,7 @@
 
 ## 5-4. 거래 내역 조회
 
-**GET** `/accounts/{accountId}/transactions`
+**GET** `/accounts/{accountId}/transactions` | Bearer Token 필요
 
 ### Query Parameters
 
