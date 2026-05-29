@@ -16,7 +16,7 @@ public class StockService {
     return CashBalanceResponse.from(transactionServerClient.getCashBalance(accountId));
   }
 
-  public StockAccountsResponse getStockAccounts() {
-    return StockAccountsResponse.from(transactionServerClient.getStockAccounts());
+  public StockAccountsResponse getStockAccounts(String firebaseUid) {
+    return StockAccountsResponse.from(transactionServerClient.getStockAccounts(firebaseUid));
   }
 }

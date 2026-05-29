@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,7 +48,8 @@ public class StockController {
         description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
   })
   @GetMapping("/accounts")
-  public ResponseEntity<ApiResponse<StockAccountsResponse>> getStockAccounts() {
-    return ResponseEntity.ok(ApiResponse.success(stockService.getStockAccounts()));
+  public ResponseEntity<ApiResponse<StockAccountsResponse>> getStockAccounts(
+      @RequestHeader("X-Firebase-Uid") String firebaseUid) {
+    return ResponseEntity.ok(ApiResponse.success(stockService.getStockAccounts(firebaseUid)));
   }
 }

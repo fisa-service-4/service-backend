@@ -232,12 +232,13 @@ public class TransactionServerClient {
   // 주문 가능 계좌 조회
   // ───────────────────────────────────────────────
 
-  public List<StockAccountItem> getStockAccounts() {
+  public List<StockAccountItem> getStockAccounts(String firebaseUid) {
     try {
       TxResponse<TxContentData<StockAccountItem>> response =
           transactionServerRestClient
               .get()
               .uri("/baas/v1/stock/accounts")
+              .header("x-firebase-uid", firebaseUid)
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
       return response.getData().getContent();
@@ -245,6 +246,25 @@ public class TransactionServerClient {
       throw mapError(e);
     }
   }
+
+  // ───────────────────────────────────────────────
+  // 사용자 연동
+  // ───────────────────────────────────────────────
+
+  public void linkUser(String firebaseUid, String name, String phoneNumber) {
+    try {
+      transactionServerRestClient
+          .post()
+          .uri("/baas/v1/user/link")
+          .body(new LinkUserRequest(firebaseUid, name, phoneNumber))
+          .retrieve()
+          .toBodilessEntity();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  public record LinkUserRequest(String firebaseUid, String name, String phoneNumber) {}
 
   // ───────────────────────────────────────────────
   // 현재가 조회 (관심종목 내부 사용)
