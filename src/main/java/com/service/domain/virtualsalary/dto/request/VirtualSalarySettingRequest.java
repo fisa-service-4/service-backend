@@ -24,6 +24,9 @@ public class VirtualSalarySettingRequest {
   @Max(value = 31, message = "월급일은 31 이하이어야 합니다.")
   private Integer payday;
 
+  @DecimalMin(value = "0.01", message = "비상금 목표 금액은 0보다 커야 합니다.")
+  private BigDecimal emergencyTargetAmount;
+
   @DecimalMin(value = "0.00", message = "투자 비율은 0 이상이어야 합니다.")
   @DecimalMax(value = "100.00", message = "투자 비율은 100 이하이어야 합니다.")
   private BigDecimal investmentRatio;
