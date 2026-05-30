@@ -30,7 +30,7 @@ spring:
 
 jwt:
   secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256
-  access-token-expiration: 1800000    # 30분 (ms)
+  access-token-expiration: 3600000    # 1시간 (ms)
   refresh-token-expiration: 604800000 # 7일 (ms)
 
 firebase:
