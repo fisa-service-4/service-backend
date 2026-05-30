@@ -23,19 +23,19 @@ public class BankServerClient {
   @Value("${mydata.server.url}")
   private String mydataServerUrl;
 
-  public List<BankAccountItem> getBankAccounts(String firebaseUid) {
-    String url = mydataServerUrl + "/bank/accounts";
+  public ConnectionsData getConnections(String firebaseUid) {
+    String url = mydataServerUrl + "/connections";
     HttpHeaders headers = new HttpHeaders();
     headers.set("X-Firebase-Uid", firebaseUid);
-    ResponseEntity<BankAccountListWrapper> response =
+    ResponseEntity<ConnectionsWrapper> response =
         restTemplate.exchange(
             url, HttpMethod.GET, new HttpEntity<>(headers), new ParameterizedTypeReference<>() {});
 
-    BankAccountListWrapper body = response.getBody();
+    ConnectionsWrapper body = response.getBody();
     if (body == null || !body.isSuccess() || body.getData() == null) {
       throw new RuntimeException("mydata-server 계좌 목록 조회 실패: firebaseUid=" + firebaseUid);
     }
-    return body.getData().getContent();
+    return body.getData();
   }
 
   public BigDecimal getAccountBalance(Long accountId) {
@@ -53,15 +53,16 @@ public class BankServerClient {
 
   @Getter
   @NoArgsConstructor
-  static class BankAccountListWrapper {
+  static class ConnectionsWrapper {
     private boolean success;
-    private BankAccountListData data;
+    private ConnectionsData data;
   }
 
   @Getter
   @NoArgsConstructor
-  static class BankAccountListData {
-    private List<BankAccountItem> content;
+  public static class ConnectionsData {
+    private List<BankAccountItem> bankAccounts;
+    private List<StockAccountItem> stockAccounts;
   }
 
   @Getter
@@ -72,7 +73,15 @@ public class BankServerClient {
     private String accountNumber;
     private String accountName;
     private BigDecimal balance;
-    private String accountStatus;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  public static class StockAccountItem {
+    private Long accountId;
+    private String bankCode;
+    private String accountNumber;
+    private String accountName;
   }
 
   @Getter

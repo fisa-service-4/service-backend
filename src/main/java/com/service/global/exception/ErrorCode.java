@@ -56,6 +56,8 @@ public enum ErrorCode {
   ACCOUNT_001(HttpStatus.NOT_FOUND, "ACCOUNT_001", "해당 계좌를 찾을 수 없습니다."),
   ACCOUNT_002(HttpStatus.FORBIDDEN, "ACCOUNT_002", "본인 계좌가 아닙니다."),
   ACCOUNT_003(HttpStatus.BAD_REQUEST, "ACCOUNT_003", "계좌 상태가 유효하지 않습니다."),
+  ACCOUNT_004(HttpStatus.CONFLICT, "ACCOUNT_004", "해당 역할은 이미 다른 계좌에 설정되어 있습니다."),
+  ACCOUNT_005(HttpStatus.BAD_REQUEST, "ACCOUNT_005", "증권 계좌만 주식 계좌로 설정할 수 있습니다."),
 
   // TRANSFER
   TRANSFER_001(HttpStatus.NOT_FOUND, "TRANSFER_001", "해당 이체 건을 찾을 수 없습니다."),

@@ -30,14 +30,18 @@ public class AccountService {
   private final BankServerClient bankServerClient;
   private final UserRepository userRepository;
 
-  @Transactional(readOnly = true)
   public List<AccountListResponse> getMyAccounts(Long userId) {
     User user =
         userRepository
             .findById(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_001));
-    List<BankServerClient.BankAccountItem> bankAccounts =
-        bankServerClient.getBankAccounts(user.getFirebaseUid());
+    BankServerClient.ConnectionsData connections =
+        bankServerClient.getConnections(user.getFirebaseUid());
+
+    List<BankServerClient.BankAccountItem> bankAccounts = connections.getBankAccounts();
+    List<BankServerClient.StockAccountItem> stockAccounts = connections.getStockAccounts();
+
+    syncLinkedAccounts(user, bankAccounts, stockAccounts);
 
     Map<Long, AccountMapping.MappingType> roleMap =
         accountMappingRepository.findByUserId(userId).stream()
@@ -47,19 +51,29 @@ public class AccountService {
                     AccountMapping::getMappingType,
                     (a, b) -> a));
 
-    return bankAccounts.stream()
-        .map(
-            account ->
+    List<AccountListResponse> result = new java.util.ArrayList<>();
+    bankAccounts.forEach(
+        account ->
+            result.add(
                 AccountListResponse.builder()
                     .accountId(account.getAccountId())
                     .bankCode(account.getBankCode())
                     .accountNumber(account.getAccountNumber())
                     .accountName(account.getAccountName())
                     .balance(account.getBalance())
-                    .accountStatus(account.getAccountStatus())
                     .accountRole(toApiRole(roleMap.get(account.getAccountId())))
-                    .build())
-        .toList();
+                    .build()));
+    stockAccounts.forEach(
+        account ->
+            result.add(
+                AccountListResponse.builder()
+                    .accountId(account.getAccountId())
+                    .bankCode(account.getBankCode())
+                    .accountNumber(account.getAccountNumber())
+                    .accountName(account.getAccountName())
+                    .accountRole(toApiRole(roleMap.get(account.getAccountId())))
+                    .build()));
+    return result;
   }
 
   public AccountRoleUpdateResponse updateAccountRole(
@@ -78,6 +92,24 @@ public class AccountService {
 
     AccountMapping.MappingType newType = request.getAccountRole().toMappingType();
 
+    if (newType == AccountMapping.MappingType.STOCK
+        && account.getInstitutionType() != LinkedFinancialAccount.InstitutionType.SECURITIES) {
+      throw new BusinessException(ErrorCode.ACCOUNT_005);
+    }
+
+    // 같은 역할이 다른 계좌에 이미 있으면 해제
+    accountMappingRepository
+        .findByUserIdAndMappingType(userId, newType)
+        .ifPresent(
+            existing -> {
+              if (!existing
+                  .getLinkedFinancialAccount()
+                  .getLinkedAccountId()
+                  .equals(account.getLinkedAccountId())) {
+                accountMappingRepository.delete(existing);
+              }
+            });
+
     accountMappingRepository
         .findByLinkedFinancialAccount_LinkedAccountId(account.getLinkedAccountId())
         .ifPresentOrElse(
@@ -95,6 +127,46 @@ public class AccountService {
         .accountRole(request.getAccountRole().name())
         .updatedAt(LocalDateTime.now())
         .build();
+  }
+
+  private void syncLinkedAccounts(
+      User user,
+      List<BankServerClient.BankAccountItem> bankAccounts,
+      List<BankServerClient.StockAccountItem> stockAccounts) {
+    for (BankServerClient.BankAccountItem account : bankAccounts) {
+      boolean exists =
+          linkedFinancialAccountRepository
+              .findByExternalAccountIdAndUser_UserId(account.getAccountId(), user.getUserId())
+              .isPresent();
+      if (!exists) {
+        linkedFinancialAccountRepository.save(
+            LinkedFinancialAccount.builder()
+                .user(user)
+                .institutionType(LinkedFinancialAccount.InstitutionType.BANK)
+                .institutionCode(account.getBankCode())
+                .externalAccountId(account.getAccountId())
+                .accountMasking(account.getAccountNumber())
+                .syncedAt(LocalDateTime.now())
+                .build());
+      }
+    }
+    for (BankServerClient.StockAccountItem account : stockAccounts) {
+      boolean exists =
+          linkedFinancialAccountRepository
+              .findByExternalAccountIdAndUser_UserId(account.getAccountId(), user.getUserId())
+              .isPresent();
+      if (!exists) {
+        linkedFinancialAccountRepository.save(
+            LinkedFinancialAccount.builder()
+                .user(user)
+                .institutionType(LinkedFinancialAccount.InstitutionType.SECURITIES)
+                .institutionCode(account.getBankCode())
+                .externalAccountId(account.getAccountId())
+                .accountMasking(account.getAccountNumber())
+                .syncedAt(LocalDateTime.now())
+                .build());
+      }
+    }
   }
 
   private String toApiRole(AccountMapping.MappingType type) {
