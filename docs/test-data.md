@@ -116,6 +116,17 @@ COMMIT;
 
 **연결**: `postgres-operational:5432` / DB: `finance_operational` / User: `admin`
 
+> **주의**: BCrypt 해시에 포함된 `$` 기호는 bash/PowerShell의 더블쿼트(`"`) 환경에서
+> 쉘 변수로 치환되어 해시가 손상됩니다.
+> 반드시 **psql 대화형 프롬프트에 직접 붙여넣기**하거나 `.sql` 파일로 실행하세요.
+>
+> ```bash
+> # 올바른 실행 방법 — psql 대화형 프롬프트 진입 후 SQL 붙여넣기
+> docker exec -it postgres-operational psql -U admin -d finance_operational
+> ```
+>
+> 절대 `psql -c "... $2b$10$... "` 형태로 실행하지 마세요.
+
 ```sql
 -- 사용자 삽입 (password: Test1234! 의 BCrypt hash)
 INSERT INTO users
