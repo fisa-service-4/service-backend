@@ -820,7 +820,7 @@
 
 ---
 
-## 5-4. 거래 내역 조회
+## 5-5. 거래 내역 조회
 
 **GET** `/accounts/{accountId}/transactions` | Bearer Token 필요
 
@@ -867,17 +867,19 @@
 }
 ```
 
-## 5-5. 거래 카테고리 조회
+## 5-6. 거래 카테고리 조회
+
 **GET** `/accounts/{accountId}/transactions/categories` | Bearer Token 필요
 
 **Query Parameters**
 
-| 이름 | 타입 | 필수 | 설명 |
-| --- | --- | --- | --- |
-| from | Date | O | 집계 시작일 (YYYY-MM-DD) |
-| to | Date | O | 집계 종료일 (YYYY-MM-DD) |
+| 이름 | 타입 | 필수 | 설명                     |
+| ---- | ---- | ---- | ------------------------ |
+| from | Date | O    | 집계 시작일 (YYYY-MM-DD) |
+| to   | Date | O    | 집계 종료일 (YYYY-MM-DD) |
 
 **Response** `200 OK`
+
 ```json
 {
   "success": true,
@@ -902,7 +904,7 @@
   },
   "meta": { "traceId": "uuid" }
 }
-````
+```
 
 | 상황           | 코드        | 메시지                       |
 | -------------- | ----------- | ---------------------------- |
@@ -1581,8 +1583,8 @@
     "targetSalary": 3000000,
     "payday": 25,
     "emergencyTargetAmount": 5000000,
-    "investmentRatio": 20.00,
-    "emergencyRatio": 30.00,
+    "investmentRatio": 20.0,
+    "emergencyRatio": 30.0,
     "priorityOrder": ["SALARY", "EMERGENCY", "INVESTMENT"],
     "updatedAt": "2026-05-17T12:00:00"
   },
@@ -1666,7 +1668,7 @@
     "currentBalance": 1200000,
     "remainAmount": 1800000,
     "usedAmount": 1200000,
-    "progressRate": 40.00,
+    "progressRate": 40.0,
     "payday": 25,
     "dday": 8
   },
@@ -1699,7 +1701,7 @@
     "dashboard": {
       "targetSalary": 3000000,
       "currentBalance": 1200000,
-      "progressRate": 40.00,
+      "progressRate": 40.0,
       "dday": 8
     },
     "monthlyExpectedIncome": 4835000,
@@ -1735,8 +1737,8 @@
 {
   "success": true,
   "data": {
-    "recommendedEmergencyRatio": 30.00,
-    "recommendedInvestmentRatio": 20.00,
+    "recommendedEmergencyRatio": 30.0,
+    "recommendedInvestmentRatio": 20.0,
     "summary": "현재 비상금이 목표 금액의 60% 수준으로 비상금 비율 확대를 추천합니다."
   },
   "meta": { "traceId": "uuid" }
