@@ -25,6 +25,9 @@ public class LoginResponse {
   @Schema(description = "권한", example = "USER")
   private String role;
 
+  @Schema(description = "Firebase UID", example = "firebase-uid-abc123")
+  private String firebaseUid;
+
   public static LoginResponse of(String accessToken, String refreshToken, User user) {
     return LoginResponse.builder()
         .accessToken(accessToken)
@@ -32,6 +35,7 @@ public class LoginResponse {
         .userId(user.getUserId())
         .userName(user.getUserName())
         .role(user.getRole().name())
+        .firebaseUid(user.getFirebaseUid())
         .build();
   }
 }
