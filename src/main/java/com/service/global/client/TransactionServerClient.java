@@ -251,12 +251,12 @@ public class TransactionServerClient {
   // 사용자 연동
   // ───────────────────────────────────────────────
 
-  public void linkUser(String firebaseUid, String name, String phoneNumber) {
+  public void linkUser(Long userId, String firebaseUid, String name, String phoneNumber) {
     try {
       transactionServerRestClient
           .post()
           .uri("/baas/v1/user/link")
-          .body(new LinkUserRequest(firebaseUid, name, phoneNumber))
+          .body(new LinkUserRequest(userId, firebaseUid, name, phoneNumber))
           .retrieve()
           .toBodilessEntity();
     } catch (RestClientResponseException e) {
@@ -264,7 +264,7 @@ public class TransactionServerClient {
     }
   }
 
-  public record LinkUserRequest(String firebaseUid, String name, String phoneNumber) {}
+  public record LinkUserRequest(Long userId, String firebaseUid, String name, String phoneNumber) {}
 
   // ───────────────────────────────────────────────
   // 현재가 조회 (관심종목 내부 사용)
