@@ -23,20 +23,20 @@ public class VirtualSalarySettingServiceImpl implements VirtualSalarySettingServ
   @Override
   @Transactional(readOnly = true)
   public VirtualSalarySettingResponse getSetting(Long userId) {
-    VirtualSalarySetting setting =
-        virtualSalarySettingRepository
-            .findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.VIRTUAL_SALARY_001));
-
-    return VirtualSalarySettingResponse.builder()
-        .targetSalary(setting.getTargetSalary())
-        .payday(setting.getPayday())
-        .emergencyTargetAmount(setting.getEmergencyTargetAmount())
-        .investmentRatio(setting.getInvestmentRatio())
-        .emergencyRatio(setting.getEmergencyRatio())
-        .priorityOrder(setting.getPriorityOrder())
-        .updatedAt(setting.getUpdatedAt())
-        .build();
+    return virtualSalarySettingRepository
+        .findById(userId)
+        .map(
+            setting ->
+                VirtualSalarySettingResponse.builder()
+                    .targetSalary(setting.getTargetSalary())
+                    .payday(setting.getPayday())
+                    .emergencyTargetAmount(setting.getEmergencyTargetAmount())
+                    .investmentRatio(setting.getInvestmentRatio())
+                    .emergencyRatio(setting.getEmergencyRatio())
+                    .priorityOrder(setting.getPriorityOrder())
+                    .updatedAt(setting.getUpdatedAt())
+                    .build())
+        .orElse(null);
   }
 
   @Override
