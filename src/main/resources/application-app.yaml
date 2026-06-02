@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: service-backend
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/finance?currentSchema=operational
+    username: admin
+    password: 1234
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/schema.sql
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: operational
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+jwt:
+  secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256
+  access-token-expiration: 1800000
+  refresh-token-expiration: 604800000
+
+firebase:
+  credential-path: woorifis-service-firebase-adminsdk-fbsvc-bf3b482f03.json
+
+mydata:
+  server:
+    url: http://mydata-server:8084/mydata/v1
+
+ai:
+  server:
+    url: http://service-ai-server:8000/api/v1/ai
+
+transaction-server:
+  url: http://transaction-server:8083
