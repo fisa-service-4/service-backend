@@ -246,12 +246,28 @@ public class AuthService {
               .setPhoneNumber(e164Phone)
               .setEmail(user.getEmail())
               .setDisplayName(user.getUserName());
-      UserRecord userRecord = FirebaseAuth.getInstance().createUser(createRequest);
+
+      UserRecord userRecord;
+      try {
+        userRecord = FirebaseAuth.getInstance().createUser(createRequest);
+      } catch (FirebaseAuthException e) {
+        log.warn("[Firebase] 유저 생성 실패, 기존 유저 조회 시도 userId={}, message={}", userId, e.getMessage());
+        userRecord = FirebaseAuth.getInstance().getUserByEmail(user.getEmail());
+      }
+
       user.updateFirebaseUid(userRecord.getUid());
-      transactionServerClient.linkUser(
-          userRecord.getUid(), user.getUserName(), user.getPhoneNumber());
+      try {
+        transactionServerClient.linkUser(
+            userId, userRecord.getUid(), user.getUserName(), user.getPhoneNumber());
+        log.info("[linkUser] transaction-server 연동 완료 userId={}", userId);
+      } catch (Exception linkEx) {
+        log.warn(
+            "[linkUser] transaction-server 연동 실패 userId={}, message={}",
+            userId,
+            linkEx.getMessage());
+      }
     } catch (FirebaseAuthException e) {
-      log.error("[Firebase] 유저 생성 실패 userId={}, message={}", userId, e.getMessage());
+      log.error("[Firebase] Firebase 처리 실패 userId={}, message={}", userId, e.getMessage());
     }
 
     user.activate();

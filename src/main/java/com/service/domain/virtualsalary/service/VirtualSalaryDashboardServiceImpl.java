@@ -6,13 +6,12 @@ import com.service.domain.virtualsalary.dto.response.VirtualSalaryDashboardRespo
 import com.service.domain.virtualsalary.entity.VirtualSalarySetting;
 import com.service.domain.virtualsalary.repository.VirtualSalarySettingRepository;
 import com.service.global.client.BankServerClient;
-import com.service.global.exception.BusinessException;
-import com.service.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,17 +27,40 @@ public class VirtualSalaryDashboardServiceImpl implements VirtualSalaryDashboard
 
   @Override
   public VirtualSalaryDashboardResponse getDashboard(Long userId) {
-    VirtualSalarySetting setting =
-        virtualSalarySettingRepository
-            .findById(userId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.VIRTUAL_SALARY_001));
+    Optional<VirtualSalarySetting> settingOpt = virtualSalarySettingRepository.findById(userId);
 
-    AccountMapping salaryMapping =
-        accountMappingRepository
-            .findByUserIdAndMappingType(userId, AccountMapping.MappingType.SALARY)
-            .orElseThrow(() -> new BusinessException(ErrorCode.VIRTUAL_SALARY_003));
+    if (settingOpt.isEmpty()) {
+      return VirtualSalaryDashboardResponse.builder()
+          .targetSalary(BigDecimal.ZERO)
+          .currentBalance(BigDecimal.ZERO)
+          .remainAmount(BigDecimal.ZERO)
+          .usedAmount(BigDecimal.ZERO)
+          .progressRate(BigDecimal.ZERO)
+          .payday(0)
+          .dday(0L)
+          .build();
+    }
 
-    Long externalAccountId = salaryMapping.getLinkedFinancialAccount().getExternalAccountId();
+    VirtualSalarySetting setting = settingOpt.get();
+
+    Optional<AccountMapping> salaryMappingOpt =
+        accountMappingRepository.findByUserIdAndMappingType(
+            userId, AccountMapping.MappingType.SALARY);
+
+    if (salaryMappingOpt.isEmpty()) {
+      return VirtualSalaryDashboardResponse.builder()
+          .targetSalary(setting.getTargetSalary())
+          .currentBalance(BigDecimal.ZERO)
+          .remainAmount(setting.getTargetSalary())
+          .usedAmount(BigDecimal.ZERO)
+          .progressRate(BigDecimal.ZERO)
+          .payday(setting.getPayday())
+          .dday(calculateDday(setting.getPayday()))
+          .build();
+    }
+
+    Long externalAccountId =
+        salaryMappingOpt.get().getLinkedFinancialAccount().getExternalAccountId();
     BigDecimal currentBalance = bankServerClient.getAccountBalance(externalAccountId);
 
     BigDecimal targetSalary = setting.getTargetSalary();
