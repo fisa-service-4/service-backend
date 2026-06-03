@@ -14,8 +14,8 @@ public class VirtualSalarySettingResponse {
   private BigDecimal targetSalary;
   private Integer payday;
   private BigDecimal emergencyTargetAmount;
-  private BigDecimal investmentRatio;
-  private BigDecimal emergencyRatio;
+  private BigDecimal investmentAmount;
+  private BigDecimal emergencyAmount;
   private List<VirtualSalaryCategory> priorityOrder;
   private LocalDateTime updatedAt;
 }

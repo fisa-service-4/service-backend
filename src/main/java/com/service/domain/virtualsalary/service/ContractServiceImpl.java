@@ -6,7 +6,9 @@ import com.service.domain.virtualsalary.dto.response.ContractDetailResponse;
 import com.service.domain.virtualsalary.dto.response.ContractListResponse;
 import com.service.domain.virtualsalary.entity.Contract;
 import com.service.domain.virtualsalary.entity.ContractSettlement;
+import com.service.domain.virtualsalary.entity.PaymentMatching;
 import com.service.domain.virtualsalary.enumtype.ContractStatus;
+import com.service.domain.virtualsalary.enumtype.MatchingStatus;
 import com.service.domain.virtualsalary.repository.ContractRepository;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
@@ -104,6 +106,19 @@ public class ContractServiceImpl implements ContractService {
             .findByContractIdAndUserId(contractId, userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.CONTRACT_001));
 
+    // TBC 매칭 우선, 없으면 최신 매칭 사용
+    PaymentMatching activeMatching =
+        contract.getPaymentMatchings().stream()
+            .filter(pm -> pm.getMatchingStatus() == MatchingStatus.TBC)
+            .findFirst()
+            .orElse(
+                contract.getPaymentMatchings().isEmpty()
+                    ? null
+                    : contract.getPaymentMatchings().get(0));
+
+    boolean canComplete =
+        activeMatching != null && activeMatching.getMatchingStatus() == MatchingStatus.TBC;
+
     return ContractDetailResponse.builder()
         .contractId(contract.getContractId())
         .clientName(contract.getClientName())
@@ -116,6 +131,11 @@ public class ContractServiceImpl implements ContractService {
         .actualPaymentDate(contract.getActualPaymentDate())
         .contractStatus(contract.getContractStatus())
         .memo(contract.getMemo())
+        .matchingId(activeMatching != null ? activeMatching.getMatchingId() : null)
+        .matchingStatus(activeMatching != null ? activeMatching.getMatchingStatus() : null)
+        .bankTransactionId(activeMatching != null ? activeMatching.getBankTransactionId() : null)
+        .transactionAmount(activeMatching != null ? activeMatching.getTransactionAmount() : null)
+        .canComplete(canComplete)
         .build();
   }
 }

@@ -1727,7 +1727,7 @@
 
 ---
 
-## 14-6. AI 추천 비율 조회
+## 14-6. AI 추천 금액 조회
 
 **GET** `/virtual-salary/recommendation` | Bearer Token 필요
 
@@ -1737,9 +1737,9 @@
 {
   "success": true,
   "data": {
-    "recommendedEmergencyRatio": 30.0,
-    "recommendedInvestmentRatio": 20.0,
-    "summary": "현재 비상금이 목표 금액의 60% 수준으로 비상금 비율 확대를 추천합니다."
+    "recommendedEmergencyAmount": 500000,
+    "recommendedInvestmentAmount": 300000,
+    "summary": "현재 비상금이 목표 금액의 60% 수준으로 비상금 이체 금액 확대를 추천합니다."
   },
   "meta": { "traceId": "uuid" }
 }

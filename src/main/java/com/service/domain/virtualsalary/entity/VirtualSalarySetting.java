@@ -39,11 +39,11 @@ public class VirtualSalarySetting {
   @Column(name = "emergency_target_amount", precision = 18, scale = 2)
   private BigDecimal emergencyTargetAmount;
 
-  @Column(name = "investment_ratio", precision = 5, scale = 2)
-  private BigDecimal investmentRatio;
+  @Column(name = "investment_amount", precision = 18, scale = 2)
+  private BigDecimal investmentAmount;
 
-  @Column(name = "emergency_ratio", precision = 5, scale = 2)
-  private BigDecimal emergencyRatio;
+  @Column(name = "emergency_amount", precision = 18, scale = 2)
+  private BigDecimal emergencyAmount;
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "priority_order")
@@ -56,14 +56,14 @@ public class VirtualSalarySetting {
       BigDecimal targetSalary,
       Integer payday,
       BigDecimal emergencyTargetAmount,
-      BigDecimal investmentRatio,
-      BigDecimal emergencyRatio,
+      BigDecimal investmentAmount,
+      BigDecimal emergencyAmount,
       List<VirtualSalaryCategory> priorityOrder) {
     this.targetSalary = targetSalary;
     this.payday = payday;
     this.emergencyTargetAmount = emergencyTargetAmount;
-    this.investmentRatio = investmentRatio;
-    this.emergencyRatio = emergencyRatio;
+    this.investmentAmount = investmentAmount;
+    this.emergencyAmount = emergencyAmount;
     this.priorityOrder = priorityOrder;
     this.updatedAt = LocalDateTime.now();
   }

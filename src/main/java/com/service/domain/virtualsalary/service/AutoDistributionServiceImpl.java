@@ -8,42 +8,130 @@ import com.service.domain.virtualsalary.enumtype.VirtualSalaryCategory;
 import com.service.domain.virtualsalary.repository.PaymentMatchingRepository;
 import com.service.domain.virtualsalary.repository.VirtualSalarySettingRepository;
 import com.service.global.client.BankServerClient;
+import com.service.global.client.TransactionServerClient;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class AutoDistributionServiceImpl implements AutoDistributionService {
 
-  private static final BigDecimal HUNDRED = new BigDecimal("100");
   private static final BigDecimal ZERO = BigDecimal.ZERO;
 
   private final PaymentMatchingRepository paymentMatchingRepository;
   private final VirtualSalarySettingRepository virtualSalarySettingRepository;
   private final AccountMappingRepository accountMappingRepository;
   private final BankServerClient bankServerClient;
+  private final TransactionServerClient transactionServerClient;
 
   @Override
   public void distribute(Long userId, Long matchingId) {
     VirtualSalarySetting setting = virtualSalarySettingRepository.findById(userId).orElse(null);
-    if (setting == null) return;
+    if (setting == null) {
+      log.debug("자동 분배 스킵 - 가상월급 설정 없음: userId={}", userId);
+      return;
+    }
 
     PaymentMatching matching =
         paymentMatchingRepository
             .findById(matchingId)
             .orElseThrow(() -> new BusinessException(ErrorCode.MATCHING_001));
 
-    BigDecimal actualIncome = matching.getContract().getSettlement().getActualIncome();
-    BigDecimal incomeBalance = resolveIncomeBalance(userId);
+    Long incomeAccountId = resolveAccountId(userId, AccountMapping.MappingType.INCOME);
+    if (incomeAccountId == null) {
+      log.warn("자동 분배 스킵 - INCOME 계좌 미연결: userId={}", userId);
+      return;
+    }
 
-    calculate(actualIncome, incomeBalance, setting);
+    // Issue 3 수정: 잔액 조회 실패 시 Long.MAX_VALUE 대신 early return
+    BigDecimal incomeBalance;
+    try {
+      incomeBalance = bankServerClient.getAccountBalance(incomeAccountId);
+    } catch (Exception e) {
+      log.warn("자동 분배 스킵 - INCOME 잔액 조회 실패: userId={}", userId);
+      return;
+    }
+
+    BigDecimal actualIncome = matching.getContract().getSettlement().getActualIncome();
+    DistributionResult result = calculate(actualIncome, incomeBalance, setting);
+
+    executeTransfers(userId, incomeAccountId, result, setting);
+
+    log.info(
+        "자동 분배 완료: userId={}, matchingId={}, emergency={}, investment={}, living={}",
+        userId,
+        matchingId,
+        result.emergencyAmount(),
+        result.investmentAmount(),
+        result.livingAmount());
+  }
+
+  private void executeTransfers(
+      Long userId, Long incomeAccountId, DistributionResult result, VirtualSalarySetting setting) {
+
+    if (result.emergencyAmount().compareTo(ZERO) > 0) {
+      Long emergencyAccountId = resolveAccountId(userId, AccountMapping.MappingType.EMERGENCY);
+      if (emergencyAccountId != null) {
+        try {
+          BigDecimal actualEmergencyAmount = result.emergencyAmount();
+
+          // Issue 2 수정: 비상금 목표 금액에서 현재 잔액을 뺀 잔여 용량으로 cap
+          if (setting.getEmergencyTargetAmount() != null) {
+            BigDecimal currentEmergencyBalance =
+                bankServerClient.getAccountBalance(emergencyAccountId);
+            BigDecimal remaining =
+                setting.getEmergencyTargetAmount().subtract(currentEmergencyBalance).max(ZERO);
+            actualEmergencyAmount = actualEmergencyAmount.min(remaining);
+          }
+
+          if (actualEmergencyAmount.compareTo(ZERO) > 0) {
+            BankServerClient.BankAccountDetailData emergencyDetail =
+                bankServerClient.getBankAccountDetail(emergencyAccountId);
+            transactionServerClient.bankTransfer(
+                UUID.randomUUID().toString(),
+                incomeAccountId,
+                emergencyDetail.getBankCode(),
+                emergencyDetail.getAccountNumber(),
+                actualEmergencyAmount,
+                "AI");
+            log.info("비상금 이체 완료: userId={}, amount={}", userId, actualEmergencyAmount);
+          } else {
+            log.info("비상금 이체 스킵 - 목표 금액 달성: userId={}", userId);
+          }
+        } catch (Exception e) {
+          log.warn("비상금 이체 실패: userId={}, error={}", userId, e.getMessage());
+        }
+      }
+    }
+
+    if (result.investmentAmount().compareTo(ZERO) > 0) {
+      Long investmentAccountId = resolveAccountId(userId, AccountMapping.MappingType.STOCK);
+      if (investmentAccountId != null) {
+        try {
+          BankServerClient.BankAccountDetailData investmentDetail =
+              bankServerClient.getBankAccountDetail(investmentAccountId);
+          transactionServerClient.bankTransfer(
+              UUID.randomUUID().toString(),
+              incomeAccountId,
+              investmentDetail.getBankCode(),
+              investmentDetail.getAccountNumber(),
+              result.investmentAmount(),
+              "AI");
+          log.info("투자 이체 완료: userId={}, amount={}", userId, result.investmentAmount());
+        } catch (Exception e) {
+          log.warn("투자 이체 실패: userId={}, error={}", userId, e.getMessage());
+        }
+      }
+    }
   }
 
   private DistributionResult calculate(
@@ -55,8 +143,7 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
     BigDecimal emergencyAmount = ZERO;
     BigDecimal investmentAmount = ZERO;
 
-    BigDecimal emergencyCapRemaining = resolveEmergencyCapRemaining(setting);
-
+    // Issue 2 수정: calculate()에서 emergencyCapRemaining 제거 — 실제 cap은 executeTransfers()에서 처리
     if (order != null && !order.isEmpty()) {
       for (VirtualSalaryCategory cat : order) {
         switch (cat) {
@@ -65,36 +152,33 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
             distributable = distributable.subtract(salaryReserved);
           }
           case EMERGENCY -> {
-            if (setting.getEmergencyRatio() != null && emergencyCapRemaining.compareTo(ZERO) > 0) {
-              BigDecimal calc =
-                  actualIncome
-                      .multiply(setting.getEmergencyRatio())
-                      .divide(HUNDRED, 2, RoundingMode.DOWN);
-              emergencyAmount = calc.min(distributable).min(emergencyCapRemaining);
+            if (setting.getEmergencyAmount() != null) {
+              emergencyAmount = setting.getEmergencyAmount().min(distributable);
               distributable = distributable.subtract(emergencyAmount);
             }
           }
           case INVESTMENT -> {
-            if (setting.getInvestmentRatio() != null) {
-              BigDecimal calc =
-                  actualIncome
-                      .multiply(setting.getInvestmentRatio())
-                      .divide(HUNDRED, 2, RoundingMode.DOWN);
-              investmentAmount = calc.min(distributable);
+            if (setting.getInvestmentAmount() != null) {
+              investmentAmount = setting.getInvestmentAmount().min(distributable);
               distributable = distributable.subtract(investmentAmount);
             }
           }
         }
       }
     } else {
-      emergencyAmount = calcEmergencyRaw(actualIncome, setting, emergencyCapRemaining);
-      investmentAmount =
-          calcInvestmentRaw(actualIncome, setting, actualIncome.subtract(emergencyAmount));
-      distributable = actualIncome.subtract(emergencyAmount).subtract(investmentAmount);
+      if (setting.getEmergencyAmount() != null) {
+        emergencyAmount = setting.getEmergencyAmount().min(distributable);
+        distributable = distributable.subtract(emergencyAmount);
+      }
+      if (setting.getInvestmentAmount() != null) {
+        investmentAmount = setting.getInvestmentAmount().min(distributable);
+        distributable = distributable.subtract(investmentAmount);
+      }
     }
 
     BigDecimal livingAmount = distributable;
 
+    // SALARY 우선순위 → 입금통장에서 salaryReserved를 제외한 잔액 기준으로 이체 가능 금액 cap
     BigDecimal effectiveBalance = incomeBalance.subtract(salaryReserved).max(ZERO);
     BigDecimal totalToTransfer = emergencyAmount.add(investmentAmount);
 
@@ -115,39 +199,11 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
 
   // ── helpers ──────────────────────────────────────────────────────────────
 
-  private BigDecimal resolveEmergencyCapRemaining(VirtualSalarySetting setting) {
-    if (setting.getEmergencyTargetAmount() == null) return BigDecimal.valueOf(Long.MAX_VALUE);
-    return setting.getEmergencyTargetAmount().max(ZERO);
-  }
-
-  private BigDecimal resolveIncomeBalance(Long userId) {
-    try {
-      return accountMappingRepository
-          .findByUserIdAndMappingType(userId, AccountMapping.MappingType.INCOME)
-          .map(
-              m ->
-                  bankServerClient.getAccountBalance(
-                      m.getLinkedFinancialAccount().getExternalAccountId()))
-          .orElse(BigDecimal.valueOf(Long.MAX_VALUE));
-    } catch (Exception e) {
-      return BigDecimal.valueOf(Long.MAX_VALUE);
-    }
-  }
-
-  private BigDecimal calcEmergencyRaw(
-      BigDecimal base, VirtualSalarySetting setting, BigDecimal cap) {
-    if (setting.getEmergencyRatio() == null || cap.compareTo(ZERO) <= 0) return ZERO;
-    BigDecimal calc =
-        base.multiply(setting.getEmergencyRatio()).divide(HUNDRED, 2, RoundingMode.DOWN);
-    return calc.min(cap);
-  }
-
-  private BigDecimal calcInvestmentRaw(
-      BigDecimal base, VirtualSalarySetting setting, BigDecimal distributable) {
-    if (setting.getInvestmentRatio() == null) return ZERO;
-    BigDecimal calc =
-        base.multiply(setting.getInvestmentRatio()).divide(HUNDRED, 2, RoundingMode.DOWN);
-    return calc.min(distributable);
+  private Long resolveAccountId(Long userId, AccountMapping.MappingType type) {
+    return accountMappingRepository
+        .findByUserIdAndMappingType(userId, type)
+        .map(m -> m.getLinkedFinancialAccount().getExternalAccountId())
+        .orElse(null);
   }
 
   private BigDecimal[] capByBalance(
