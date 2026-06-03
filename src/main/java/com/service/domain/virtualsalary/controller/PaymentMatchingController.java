@@ -55,14 +55,14 @@ public class PaymentMatchingController {
             paymentMatchingService.getMatchings(userId, contractId, matchingStatus, from, to)));
   }
 
-  @Operation(summary = "수동 매칭 처리", description = "미매칭 입금 건을 수동으로 계약과 매칭 처리합니다.")
+  @Operation(summary = "완료 처리", description = "미입금 또는 금액 불일치 계약을 완료 처리합니다.")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "200",
-        description = "수동 매칭 성공"),
+        description = "완료 처리 성공"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "400",
-        description = "MATCHING_002: 이미 매칭 처리된 건 | MATCHING_003: matchedBy는 USER만 허용"),
+        description = "MATCHING_002: 이미 완료 처리된 건 | MATCHING_003: matchedBy는 USER만 허용"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "401",
         description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰"),

@@ -16,6 +16,6 @@ public class AiRecommendationRequest {
   private BigDecimal currentBalance;
   private BigDecimal monthlyExpectedIncome;
   private BigDecimal emergencyTargetAmount;
-  private BigDecimal emergencyRatio;
-  private BigDecimal investmentRatio;
+  private BigDecimal emergencyAmount;
+  private BigDecimal investmentAmount;
 }

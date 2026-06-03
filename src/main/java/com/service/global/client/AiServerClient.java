@@ -59,8 +59,8 @@ public class AiServerClient {
   @Getter
   @NoArgsConstructor
   public static class RecommendationResult {
-    private BigDecimal recommendedEmergencyRatio;
-    private BigDecimal recommendedInvestmentRatio;
+    private BigDecimal recommendedEmergencyAmount;
+    private BigDecimal recommendedInvestmentAmount;
     private String summary;
   }
 }

@@ -210,16 +210,14 @@ public class VirtualSalaryController {
 
   @Operation(
       summary = "가상월급 설정 저장",
-      description =
-          "가상월급 설정을 저장합니다. 기존 설정이 없으면 생성하고, 있으면 덮어씁니다(upsert)."
-              + " investmentRatio + emergencyRatio <= 100 정책이 적용됩니다.")
+      description = "가상월급 설정을 저장합니다. 기존 설정이 없으면 생성하고, 있으면 덮어씁니다(upsert).")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "201",
         description = "가상월급 설정 저장 성공"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "400",
-        description = "VALID_001: 입력값 오류 | VIRTUAL_SALARY_002: 투자 비율과 비상금 비율의 합이 100 초과"),
+        description = "VALID_001: 입력값 오류"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "401",
         description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
@@ -240,7 +238,7 @@ public class VirtualSalaryController {
         description = "가상월급 설정 수정 성공"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "400",
-        description = "VALID_001: 입력값 오류 | VIRTUAL_SALARY_002: 투자 비율과 비상금 비율의 합이 100 초과"),
+        description = "VALID_001: 입력값 오류"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "401",
         description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")

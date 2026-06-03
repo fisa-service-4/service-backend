@@ -58,6 +58,50 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 은행 이체
+  // ───────────────────────────────────────────────
+
+  public BankTransferResult bankTransfer(
+      String idempotencyKey,
+      Long fromAccountId,
+      String toBankCode,
+      String toAccountNumber,
+      java.math.BigDecimal transferAmount,
+      String requestedBy) {
+    try {
+      TxResponse<BankTransferResult> response =
+          transactionServerRestClient
+              .post()
+              .uri("/baas/v1/bank/transfers")
+              .header("Idempotency-Key", idempotencyKey)
+              .body(
+                  new BankTransferRequest(
+                      fromAccountId, toBankCode, toAccountNumber, transferAmount, requestedBy))
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  public record BankTransferRequest(
+      Long fromAccountId,
+      String toBankCode,
+      String toAccountNumber,
+      java.math.BigDecimal transferAmount,
+      String requestedBy) {}
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class BankTransferResult {
+    private Long transferId;
+    private String transferStatus;
+    private java.time.LocalDateTime requestedAt;
+  }
+
+  // ───────────────────────────────────────────────
   // 수익률 조회
   // ───────────────────────────────────────────────
 

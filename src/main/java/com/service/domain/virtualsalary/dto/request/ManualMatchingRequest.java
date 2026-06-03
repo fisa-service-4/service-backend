@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ManualMatchingRequest {
 
-  @NotNull(message = "bankTransactionId는 필수입니다.")
   private Long bankTransactionId;
 
   @NotNull(message = "matchedBy는 필수입니다.")

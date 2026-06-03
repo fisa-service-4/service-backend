@@ -5,7 +5,9 @@ import com.service.domain.mydata.repository.AccountMappingRepository;
 import com.service.domain.virtualsalary.entity.VirtualSalarySetting;
 import com.service.domain.virtualsalary.repository.VirtualSalarySettingRepository;
 import com.service.global.client.BankServerClient;
+import com.service.global.client.TransactionServerClient;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +24,7 @@ public class VirtualSalaryPaymentServiceImpl implements VirtualSalaryPaymentServ
   private final VirtualSalarySettingRepository virtualSalarySettingRepository;
   private final AccountMappingRepository accountMappingRepository;
   private final BankServerClient bankServerClient;
+  private final TransactionServerClient transactionServerClient;
 
   @Override
   @Transactional(readOnly = true)
@@ -61,6 +64,7 @@ public class VirtualSalaryPaymentServiceImpl implements VirtualSalaryPaymentServ
     }
 
     Long incomeAccountId = incomeMapping.get().getLinkedFinancialAccount().getExternalAccountId();
+    Long salaryAccountId = salaryMapping.get().getLinkedFinancialAccount().getExternalAccountId();
 
     BigDecimal incomeBalance;
     try {
@@ -78,11 +82,27 @@ public class VirtualSalaryPaymentServiceImpl implements VirtualSalaryPaymentServ
       return;
     }
 
-    log.info(
-        "가상월급 지급 대상 확인: userId={}, targetSalary={}, incomeBalance={}, paidAmount={}",
-        userId,
-        targetSalary,
-        incomeBalance,
-        paidAmount);
+    try {
+      BankServerClient.BankAccountDetailData salaryDetail =
+          bankServerClient.getBankAccountDetail(salaryAccountId);
+
+      // Issue 5 수정: 결정론적 키 → 같은 날 스케줄러 재실행 시 중복 이체 방지
+      String idempotencyKey = "payday-" + userId + "-" + LocalDate.now();
+      transactionServerClient.bankTransfer(
+          idempotencyKey,
+          incomeAccountId,
+          salaryDetail.getBankCode(),
+          salaryDetail.getAccountNumber(),
+          paidAmount,
+          "AI");
+
+      log.info(
+          "가상월급 지급 완료: userId={}, targetSalary={}, paidAmount={}",
+          userId,
+          targetSalary,
+          paidAmount);
+    } catch (Exception e) {
+      log.warn("가상월급 지급 실패: userId={}, error={}", userId, e.getMessage());
+    }
   }
 }
