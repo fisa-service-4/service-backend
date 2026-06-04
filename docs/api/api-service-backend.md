@@ -1634,27 +1634,7 @@
 
 ---
 
-## 14-3. 가상월급 설정 수정
-
-**PATCH** `/virtual-salary` | Bearer Token 필요
-
-**Request Body** — 14-2 저장과 동일 형식
-
-**Response** `200 OK`
-
-```json
-{
-  "success": true,
-  "data": {
-    "saved": true
-  },
-  "meta": { "traceId": "uuid" }
-}
-```
-
----
-
-## 14-4. 가상월급 대시보드 조회
+## 14-3. 가상월급 대시보드 조회
 
 **GET** `/virtual-salary/dashboard` | Bearer Token 필요
 
@@ -1688,7 +1668,7 @@
 
 ---
 
-## 14-5. 가상월급 홈 요약 조회
+## 14-4. 가상월급 홈 요약 조회
 
 **GET** `/virtual-salary/summary` | Bearer Token 필요
 
@@ -1727,7 +1707,7 @@
 
 ---
 
-## 14-6. AI 추천 금액 조회
+## 14-5. AI 추천 금액 조회
 
 **GET** `/virtual-salary/recommendation` | Bearer Token 필요
 

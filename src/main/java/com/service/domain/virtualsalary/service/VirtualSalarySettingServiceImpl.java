@@ -53,6 +53,9 @@ public class VirtualSalarySettingServiceImpl implements VirtualSalarySettingServ
               request.getEmergencyAmount(),
               request.getPriorityOrder());
     } else {
+      if (request.getTargetSalary() == null || request.getPayday() == null) {
+        throw new BusinessException(ErrorCode.VALID_001);
+      }
       VirtualSalarySetting newSetting =
           VirtualSalarySetting.builder()
               .userId(userId)
@@ -67,10 +70,5 @@ public class VirtualSalarySettingServiceImpl implements VirtualSalarySettingServ
     }
 
     return VirtualSalarySaveResponse.of();
-  }
-
-  @Override
-  public VirtualSalarySaveResponse updateSetting(Long userId, VirtualSalarySettingRequest request) {
-    return saveSetting(userId, request);
   }
 }

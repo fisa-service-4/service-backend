@@ -59,13 +59,12 @@ public class VirtualSalarySetting {
       BigDecimal investmentAmount,
       BigDecimal emergencyAmount,
       List<VirtualSalaryCategory> priorityOrder) {
-    this.targetSalary = targetSalary;
-    this.payday = payday;
-    this.emergencyTargetAmount = emergencyTargetAmount;
-    this.investmentAmount = investmentAmount;
-    this.emergencyAmount = emergencyAmount;
-    this.priorityOrder = priorityOrder;
-    this.updatedAt = LocalDateTime.now();
+    if (targetSalary != null) this.targetSalary = targetSalary;
+    if (payday != null) this.payday = payday;
+    if (emergencyTargetAmount != null) this.emergencyTargetAmount = emergencyTargetAmount;
+    if (investmentAmount != null) this.investmentAmount = investmentAmount;
+    if (emergencyAmount != null) this.emergencyAmount = emergencyAmount;
+    if (priorityOrder != null) this.priorityOrder = priorityOrder;
   }
 
   @PrePersist

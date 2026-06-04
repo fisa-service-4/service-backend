@@ -126,7 +126,8 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
       BigDecimal lowerThreshold = expectedIncome.multiply(MATCH_THRESHOLD_RATE);
       BigDecimal upperThreshold = expectedIncome.multiply(new BigDecimal("1.03"));
 
-      if (depositAmount.compareTo(lowerThreshold) >= 0 && depositAmount.compareTo(upperThreshold) <= 0) {
+      if (depositAmount.compareTo(lowerThreshold) >= 0
+          && depositAmount.compareTo(upperThreshold) <= 0) {
         matching.autoMatch(bankTransactionId, depositAmount);
         matching.getContract().updateContractStatus(ContractStatus.PAID);
         autoDistributionService.distribute(userId, matching.getMatchingId());

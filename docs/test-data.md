@@ -297,10 +297,10 @@ curl -X POST http://localhost:8080/api/v1/contracts \
 
 ## STEP 7 — API: 가상월급 설정 수정
 
-> `PATCH /api/v1/virtual-salary`
+> `POST /api/v1/virtual-salary`
 
 ```bash
-curl -X PATCH http://localhost:8080/api/v1/virtual-salary \
+curl -X POST http://localhost:8080/api/v1/virtual-salary \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{

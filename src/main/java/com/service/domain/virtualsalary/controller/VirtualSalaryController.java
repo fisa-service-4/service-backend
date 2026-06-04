@@ -27,7 +27,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -229,26 +228,5 @@ public class VirtualSalaryController {
     Long userId = (Long) authentication.getPrincipal();
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success(virtualSalarySettingService.saveSetting(userId, request)));
-  }
-
-  @Operation(summary = "가상월급 설정 수정", description = "기존 가상월급 설정을 수정합니다. 설정이 없으면 새로 생성합니다(upsert).")
-  @ApiResponses({
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "200",
-        description = "가상월급 설정 수정 성공"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "400",
-        description = "VALID_001: 입력값 오류"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "401",
-        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
-  })
-  @PatchMapping("/virtual-salary")
-  public ResponseEntity<ApiResponse<VirtualSalarySaveResponse>> updateVirtualSalarySetting(
-      Authentication authentication, @Valid @RequestBody VirtualSalarySettingRequest request) {
-
-    Long userId = (Long) authentication.getPrincipal();
-    return ResponseEntity.ok(
-        ApiResponse.success(virtualSalarySettingService.updateSetting(userId, request)));
   }
 }

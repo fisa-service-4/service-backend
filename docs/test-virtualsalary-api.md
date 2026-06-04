@@ -42,7 +42,7 @@ service-backend:8080  (Spring Boot — 이 서버의 API를 테스트)
 
 **외부 서버 호출 없는 API**
 
-`POST/GET/PATCH /virtual-salary`, `POST/GET /contracts`, `GET /contracts/{id}`, `GET /payment-matchings`
+`POST/GET /virtual-salary`, `POST/GET /contracts`, `GET /contracts/{id}`, `GET /payment-matchings`
 → service-backend PostgreSQL만 사용
 
 ---
@@ -177,38 +177,7 @@ curl http://localhost:8080/api/v1/virtual-salary \
 
 ---
 
-## 3. 가상월급 설정 수정 (PATCH /virtual-salary)
-
-**통신 범위**: service-backend PostgreSQL만 사용
-
-> POST와 동일하게 upsert 동작. 설정이 없으면 새로 생성합니다.
-
-```bash
-curl -X PATCH http://localhost:8080/api/v1/virtual-salary \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "targetSalary": 3500000,
-    "payday": 15,
-    "emergencyTargetAmount": 6000000,
-    "investmentRatio": 25,
-    "emergencyRatio": 35,
-    "priorityOrder": ["EMERGENCY", "SALARY", "INVESTMENT"]
-  }'
-```
-
-**응답** (`200 OK`)
-```json
-{
-  "success": true,
-  "data": { "saved": true },
-  "meta": { "traceId": "uuid" }
-}
-```
-
----
-
-## 4. 계약 생성 (POST /contracts)
+## 3. 계약 생성 (POST /contracts)
 
 **통신 범위**: service-backend PostgreSQL만 사용
 
@@ -318,7 +287,7 @@ curl -X POST http://localhost:8080/api/v1/contracts \
 
 ---
 
-## 5. 계약 목록 조회 (GET /contracts)
+## 4. 계약 목록 조회 (GET /contracts)
 
 **통신 범위**: service-backend PostgreSQL만 사용
 
@@ -362,7 +331,7 @@ curl "http://localhost:8080/api/v1/contracts?date=2026-06-01" \
 
 ---
 
-## 6. 계약 상세 조회 (GET /contracts/{contractId})
+## 5. 계약 상세 조회 (GET /contracts/{contractId})
 
 **통신 범위**: service-backend PostgreSQL만 사용
 
@@ -403,7 +372,7 @@ curl http://localhost:8080/api/v1/contracts/1 \
 
 ---
 
-## 7. 가상월급 대시보드 조회 (GET /virtual-salary/dashboard)
+## 6. 가상월급 대시보드 조회 (GET /virtual-salary/dashboard)
 
 **통신 범위**: ⚡ 외부 서버 호출 포함
 
@@ -476,7 +445,7 @@ curl http://localhost:8080/api/v1/virtual-salary/dashboard \
 
 ---
 
-## 8. 가상월급 홈 통합 조회 — BFF (GET /virtual-salary/summary)
+## 7. 가상월급 홈 통합 조회 — BFF (GET /virtual-salary/summary)
 
 **통신 범위**: ⚡ 외부 서버 호출 포함 (dashboard와 동일 체인)
 
@@ -535,7 +504,7 @@ curl http://localhost:8080/api/v1/virtual-salary/summary \
 
 ---
 
-## 9. 매칭 목록 조회 (GET /payment-matchings)
+## 8. 매칭 목록 조회 (GET /payment-matchings)
 
 **통신 범위**: service-backend PostgreSQL만 사용
 
@@ -590,7 +559,7 @@ curl "http://localhost:8080/api/v1/payment-matchings?from=2026-05-01&to=2026-05-
 
 ---
 
-## 10. 수동 매칭 처리 (PATCH /payment-matchings/{matchingId}/manual)
+## 9. 수동 매칭 처리 (PATCH /payment-matchings/{matchingId}/manual)
 
 **통신 범위**: ⚡ 외부 서버 호출 포함
 
@@ -680,7 +649,7 @@ curl -X PATCH http://localhost:8080/api/v1/payment-matchings/1/manual \
 
 ---
 
-## 11. AI 분배 비율 추천 (GET /virtual-salary/recommendation)
+## 10. AI 분배 비율 추천 (GET /virtual-salary/recommendation)
 
 **통신 범위**: ⚡ 외부 서버 호출 포함 (현재 환경 미지원)
 
@@ -747,7 +716,7 @@ curl http://localhost:8080/api/v1/virtual-salary/recommendation \
 
 ---
 
-## 12. 스케줄러 동작 확인 (매일 오전 9시)
+## 11. 스케줄러 동작 확인 (매일 오전 9시)
 
 **통신 범위**: ⚡ 외부 서버 호출 포함
 
@@ -799,13 +768,12 @@ INFO  VirtualSalaryPaymentServiceImpl: 가상월급 지급 대상 확인: userId
 [외부 통신 없는 API 검증]
   3.  POST /virtual-salary             → 설정 저장 (201)
   4.  GET  /virtual-salary             → 설정 조회 확인
-  5.  PATCH /virtual-salary            → 설정 수정 (200)
-  6.  POST /virtual-salary (비율 초과) → VIRTUAL_SALARY_002 에러
-  7.  POST /contracts (BUSINESS, 6월)  → contract_id=1, 계산값 확인
-  8.  POST /contracts (ETC, 6월)       → contract_id=2
-  9.  POST /contracts (BUSINESS, 5월) → contract_id=3 (summary 테스트용)
-  10. GET  /contracts?date=2026-06-01 → 6월 계약 2건
-  11. GET  /contracts/1               → 상세 (taxRate=0.033 확인)
+  5.  POST /virtual-salary (비율 초과) → VIRTUAL_SALARY_002 에러
+  6.  POST /contracts (BUSINESS, 6월)  → contract_id=1, 계산값 확인
+  7.  POST /contracts (ETC, 6월)       → contract_id=2
+  8.  POST /contracts (BUSINESS, 5월) → contract_id=3 (summary 테스트용)
+  9.  GET  /contracts?date=2026-06-01 → 6월 계약 2건
+  10. GET  /contracts/1               → 상세 (taxRate=0.033 확인)
 
 [외부 서버 통신 검증]
   12. curl mydata-server:8084/bank/accounts/1005/balance
