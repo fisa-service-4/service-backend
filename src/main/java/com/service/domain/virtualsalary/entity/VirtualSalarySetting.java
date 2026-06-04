@@ -68,7 +68,6 @@ public class VirtualSalarySetting {
         if (investmentAmount != null) this.investmentAmount = investmentAmount;
         if (emergencyAmount != null) this.emergencyAmount = emergencyAmount;
         if (priorityOrder != null) this.priorityOrder = priorityOrder;
-        this.updatedAt = LocalDateTime.now();
     }
 
     @PrePersist
