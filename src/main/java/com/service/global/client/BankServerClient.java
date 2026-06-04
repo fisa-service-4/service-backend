@@ -95,6 +95,7 @@ public class BankServerClient {
     private String bankCode;
     private String accountNumber;
     private String accountName;
+    private BigDecimal cashBalance;
   }
 
   @Getter
