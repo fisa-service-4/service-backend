@@ -5,6 +5,7 @@ import com.service.domain.stock.dto.response.StockAccountsResponse;
 import com.service.domain.user.repository.UserRepository;
 import com.service.global.client.TransactionServerClient;
 import com.service.global.exception.BusinessException;
+import com.service.global.exception.ErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,12 @@ public class StockService {
     return CashBalanceResponse.from(transactionServerClient.getCashBalance(accountId));
   }
 
-  public StockAccountsResponse getStockAccounts(String firebaseUid) {
+  public StockAccountsResponse getStockAccounts(Long userId) {
+    String firebaseUid =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_001))
+            .getFirebaseUid();
     try {
       return StockAccountsResponse.from(transactionServerClient.getStockAccounts(firebaseUid));
     } catch (BusinessException e) {
