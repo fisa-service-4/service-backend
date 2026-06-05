@@ -18,6 +18,9 @@ public class AdminSignupRequest {
   @Schema(description = "비밀번호 (영문+숫자+특수문자 8자 이상)", example = "Password123!")
   @NotBlank
   @Size(min = 8, message = "비밀번호는 8자 이상이어야 합니다.")
+  @Pattern(
+      regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
+      message = "비밀번호는 영문, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.")
   private String password;
 
   @Schema(description = "관리자 이름", example = "관리자1")
