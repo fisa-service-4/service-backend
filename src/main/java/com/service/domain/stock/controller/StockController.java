@@ -5,7 +5,7 @@ import com.service.domain.stock.dto.response.StockAccountsResponse;
 import com.service.domain.stock.service.StockService;
 import com.service.domain.user.entity.User;
 import com.service.domain.user.repository.UserRepository;
-import com.service.global.error.ErrorCode;
+import com.service.global.exception.ErrorCode;
 import com.service.global.exception.BusinessException;
 import com.service.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
