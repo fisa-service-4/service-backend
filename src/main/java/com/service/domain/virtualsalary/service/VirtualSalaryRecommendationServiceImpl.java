@@ -56,6 +56,7 @@ public class VirtualSalaryRecommendationServiceImpl implements VirtualSalaryReco
         aiServerClient.getVirtualSalaryRecommendation(request);
 
     return VirtualSalaryRecommendationResponse.builder()
+        .recommendedTargetSalary(result.getRecommendedTargetSalary())
         .recommendedEmergencyAmount(result.getRecommendedEmergencyAmount())
         .recommendedInvestmentAmount(result.getRecommendedInvestmentAmount())
         .summary(result.getSummary())

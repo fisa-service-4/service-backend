@@ -228,5 +228,4 @@ public class VirtualSalaryController {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success(virtualSalarySettingService.saveSetting(userId, request)));
   }
-
 }
