@@ -3,14 +3,18 @@ package com.service.domain.stock.controller;
 import com.service.domain.stock.dto.response.CashBalanceResponse;
 import com.service.domain.stock.dto.response.StockAccountsResponse;
 import com.service.domain.stock.service.StockService;
+import com.service.domain.user.entity.User;
+import com.service.domain.user.repository.UserRepository;
+import com.service.global.error.ErrorCode;
+import com.service.global.exception.BusinessException;
 import com.service.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StockController {
 
   private final StockService stockService;
+  private final UserRepository userRepository;
 
   @Operation(summary = "예수금 조회")
   @ApiResponses({
@@ -49,7 +54,10 @@ public class StockController {
   })
   @GetMapping("/accounts")
   public ResponseEntity<ApiResponse<StockAccountsResponse>> getStockAccounts(
-      @RequestHeader("X-Firebase-Uid") String firebaseUid) {
-    return ResponseEntity.ok(ApiResponse.success(stockService.getStockAccounts(firebaseUid)));
+      Authentication authentication) {
+    Long userId = (Long) authentication.getPrincipal();
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_001));
+    return ResponseEntity.ok(ApiResponse.success(stockService.getStockAccounts(user.getFirebaseUid())));
   }
 }
