@@ -1659,6 +1659,8 @@
 
 **GET** `/virtual-salary` | Bearer Token 필요
 
+> 설정이 없으면 모든 필드가 null인 빈 객체를 반환합니다 (404 아님).
+
 **Response** `200 OK`
 
 ```json

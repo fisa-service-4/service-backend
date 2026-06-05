@@ -132,8 +132,8 @@ public class VirtualSalaryController {
   // ─── Virtual Salary Recommendation ───────────────────────────────────────
 
   @Operation(
-      summary = "AI 분배 비율 추천 조회",
-      description = "사용자의 계약 수입, 자산 현황, 가상월급 설정을 기반으로 AI 서버에서 비상금/투자 비율을 추천합니다.")
+      summary = "AI 분배 금액 추천 조회",
+      description = "사용자의 계약 수입, 자산 현황, 가상월급 설정을 기반으로 AI 서버에서 비상금/투자 금액을 추천합니다.")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "200",
@@ -187,17 +187,16 @@ public class VirtualSalaryController {
 
   // ─── Virtual Salary Setting ────────────────────────────────────────────────
 
-  @Operation(summary = "가상월급 설정 조회", description = "현재 사용자의 가상월급 설정을 조회합니다.")
+  @Operation(
+      summary = "가상월급 설정 조회",
+      description = "현재 사용자의 가상월급 설정을 조회합니다. 설정이 없으면 모든 필드가 null인 빈 응답을 반환합니다.")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "200",
-        description = "가상월급 설정 조회 성공"),
+        description = "가상월급 설정 조회 성공 (설정 미존재 시 빈 응답 반환)"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "401",
-        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "404",
-        description = "VIRTUAL_SALARY_001: 가상월급 설정이 없습니다.")
+        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
   })
   @GetMapping("/virtual-salary")
   public ResponseEntity<ApiResponse<VirtualSalarySettingResponse>> getVirtualSalarySetting(
@@ -229,4 +228,5 @@ public class VirtualSalaryController {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success(virtualSalarySettingService.saveSetting(userId, request)));
   }
+
 }
