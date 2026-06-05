@@ -48,6 +48,59 @@ public class AuthService {
   private final TransactionServerClient transactionServerClient;
 
   @Transactional
+  public SignupResponse adminSignup(AdminSignupRequest request) {
+    if (userRepository.existsByEmail(request.getEmail())) {
+      throw new BusinessException(ErrorCode.AUTH_001);
+    }
+
+    String firebaseUid;
+    try {
+      UserRecord.CreateRequest createRequest =
+          new UserRecord.CreateRequest()
+              .setEmail(request.getEmail())
+              .setPassword(request.getPassword())
+              .setDisplayName(request.getUserName());
+      UserRecord userRecord;
+      try {
+        userRecord = FirebaseAuth.getInstance().createUser(createRequest);
+      } catch (FirebaseAuthException e) {
+        log.warn("[Firebase] 관리자 유저 생성 실패, 기존 유저 조회 시도 email={}", request.getEmail());
+        userRecord = FirebaseAuth.getInstance().getUserByEmail(request.getEmail());
+      }
+      firebaseUid = userRecord.getUid();
+    } catch (FirebaseAuthException e) {
+      log.error("[Firebase] 관리자 Firebase 계정 생성 실패 email={}", request.getEmail());
+      firebaseUid = UUID.randomUUID().toString();
+    }
+
+    String phonePlaceholder =
+        "ADM" + UUID.randomUUID().toString().replace("-", "").substring(0, 17);
+
+    User user =
+        User.builder()
+            .firebaseUid(firebaseUid)
+            .email(request.getEmail())
+            .passwordHash(passwordEncoder.encode(request.getPassword()))
+            .userName(request.getUserName())
+            .phoneNumber(phonePlaceholder)
+            .role(User.Role.ADMIN)
+            .status(User.Status.ACTIVE)
+            .notificationConsentYn(false)
+            .termsConsentYn(true)
+            .mydataConsentYn(false)
+            .build();
+
+    User savedUser = userRepository.save(user);
+
+    UserProfile profile =
+        UserProfile.builder().user(savedUser).freelancerYn(false).jobType(null).build();
+
+    userProfileRepository.save(profile);
+
+    return SignupResponse.of(savedUser);
+  }
+
+  @Transactional
   public SignupResponse signup(SignupRequest request) {
     if (userRepository.existsByEmail(request.getEmail())) {
       throw new BusinessException(ErrorCode.AUTH_001);
