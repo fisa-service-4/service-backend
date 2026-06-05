@@ -70,7 +70,7 @@ public class AuthService {
       firebaseUid = userRecord.getUid();
     } catch (FirebaseAuthException e) {
       log.error("[Firebase] 관리자 Firebase 계정 생성 실패 email={}", request.getEmail());
-      firebaseUid = UUID.randomUUID().toString();
+      throw new BusinessException(ErrorCode.VALID_001); // 적절한 에러 코드로 변경 필요
     }
 
     String phonePlaceholder =
