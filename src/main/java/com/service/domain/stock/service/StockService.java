@@ -2,6 +2,7 @@ package com.service.domain.stock.service;
 
 import com.service.domain.stock.dto.response.CashBalanceResponse;
 import com.service.domain.stock.dto.response.StockAccountsResponse;
+import com.service.domain.user.repository.UserRepository;
 import com.service.global.client.TransactionServerClient;
 import com.service.global.exception.BusinessException;
 import java.util.List;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class StockService {
 
   private final TransactionServerClient transactionServerClient;
+  private final UserRepository userRepository;
 
   public CashBalanceResponse getCashBalance(Long accountId) {
     return CashBalanceResponse.from(transactionServerClient.getCashBalance(accountId));

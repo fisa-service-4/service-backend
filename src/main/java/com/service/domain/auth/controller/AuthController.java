@@ -1,5 +1,6 @@
 package com.service.domain.auth.controller;
 
+import com.service.domain.auth.dto.request.AdminSignupRequest;
 import com.service.domain.auth.dto.request.LoginRequest;
 import com.service.domain.auth.dto.request.PhoneSendRequest;
 import com.service.domain.auth.dto.request.PhoneVerifyRequest;
@@ -34,6 +35,21 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
+
+  @Operation(summary = "관리자 계정 생성")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "관리자 계정 생성 성공"),
+    @ApiResponse(
+        responseCode = "400",
+        description = "AUTH_001: 이미 가입된 이메일 | VALID_001: 입력값이 올바르지 않습니다")
+  })
+  @SecurityRequirements
+  @PostMapping("/admin/signup")
+  public ResponseEntity<com.service.global.response.ApiResponse<SignupResponse>> adminSignup(
+      @Valid @RequestBody AdminSignupRequest request) {
+    return ResponseEntity.ok(
+        com.service.global.response.ApiResponse.success(authService.adminSignup(request)));
+  }
 
   @Operation(summary = "회원가입")
   @ApiResponses({
