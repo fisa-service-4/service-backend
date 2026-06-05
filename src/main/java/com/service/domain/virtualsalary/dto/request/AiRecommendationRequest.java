@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AiRecommendationRequest {
 
+  private Long userId;
   private BigDecimal targetSalary;
   private BigDecimal currentBalance;
   private BigDecimal monthlyExpectedIncome;

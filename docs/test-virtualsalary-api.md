@@ -106,8 +106,8 @@ curl -X POST http://localhost:8080/api/v1/virtual-salary \
     "targetSalary": 3000000,
     "payday": 25,
     "emergencyTargetAmount": 5000000,
-    "investmentRatio": 20,
-    "emergencyRatio": 30,
+    "investmentAmount": 600000,
+    "emergencyAmount": 900000,
     "priorityOrder": ["SALARY", "EMERGENCY", "INVESTMENT"]
   }'
 ```
@@ -124,7 +124,7 @@ curl -X POST http://localhost:8080/api/v1/virtual-salary \
 **DB 결과** (`VIRTUAL_SALARY_SETTING`)
 ```
 user_id=5, target_salary=3000000, payday=25,
-emergency_target_amount=5000000, investment_ratio=20, emergency_ratio=30,
+emergency_target_amount=5000000, investment_amount=600000, emergency_amount=900000,
 priority_order=["SALARY","EMERGENCY","INVESTMENT"]
 ```
 
@@ -132,12 +132,10 @@ priority_order=["SALARY","EMERGENCY","INVESTMENT"]
 
 | 상황 | 요청 | 에러 코드 |
 |---|---|---|
-| investmentRatio + emergencyRatio > 100 | `"investmentRatio":60,"emergencyRatio":50` | `VIRTUAL_SALARY_002` |
 | targetSalary 누락 | targetSalary 필드 제외 | `VALID_001` |
 | payday 범위 초과 | `"payday":32` | `VALID_001` |
 
 ```json
-{ "success": false, "error": { "code": "VIRTUAL_SALARY_002", "message": "투자 비율과 비상금 비율의 합은 100을 초과할 수 없습니다." } }
 { "success": false, "error": { "code": "VALID_001", "message": "입력값이 올바르지 않습니다." } }
 ```
 
@@ -160,8 +158,8 @@ curl http://localhost:8080/api/v1/virtual-salary \
     "targetSalary": 3000000.00,
     "payday": 25,
     "emergencyTargetAmount": 5000000.00,
-    "investmentRatio": 20.00,
-    "emergencyRatio": 30.00,
+    "investmentAmount": 600000.00,
+    "emergencyAmount": 900000.00,
     "priorityOrder": ["SALARY", "EMERGENCY", "INVESTMENT"],
     "updatedAt": "2026-05-29T06:26:00.471063"
   },
@@ -616,7 +614,7 @@ curl -X PATCH http://localhost:8080/api/v1/payment-matchings/1/manual \
 **자동분배 계산 결과** (응답에는 포함되지 않음, 로그로 확인)
 
 > 가상월급 설정 기준 (STEP 3 저장값 — test-data.md STEP 5 수정 전 기준):
-> `targetSalary=3,000,000`, `emergencyRatio=30%`, `investmentRatio=20%`,
+> `targetSalary=3,000,000`, `emergencyAmount=900,000`, `investmentAmount=600,000`,
 > `priorityOrder=["SALARY","EMERGENCY","INVESTMENT"]`
 > `incomeBalance=5,000,000 (oracle-bank account_id=1004)`
 > `actualIncome=3,868,000 (삼성SDS 계약 실수령액)`
@@ -625,8 +623,8 @@ curl -X PATCH http://localhost:8080/api/v1/payment-matchings/1/manual \
 |---|---|---|
 | salaryReserved | min(targetSalary=3,000,000, actualIncome=3,868,000) | 3,000,000 |
 | distributable | 3,868,000 - 3,000,000 | 868,000 |
-| emergencyAmount | min(3,868,000×30%=1,160,400, 868,000, emergencyCap=5,000,000) | 868,000 |
-| investmentAmount | min(3,868,000×20%=773,600, 0) | 0 |
+| emergencyAmount | min(설정값=900,000, distributable=868,000), emergencyCap=5,000,000 미초과 | 868,000 |
+| investmentAmount | min(설정값=600,000, distributable=0) | 0 |
 | livingAmount | 0 | 0 |
 | effectiveBalance | 5,000,000 - 3,000,000 = 2,000,000 | — |
 | totalToTransfer | 868,000 + 0 = 868,000 ≤ 2,000,000 | 잔액 충분 |
@@ -667,12 +665,13 @@ service-backend
 **AI 서버에 전달하는 요청 바디** (참고용)
 ```json
 {
+  "userId": 5,
   "targetSalary": 3000000,
   "currentBalance": 1200000,
   "monthlyExpectedIncome": 3868000,
   "emergencyTargetAmount": 5000000,
-  "emergencyRatio": 30,
-  "investmentRatio": 20
+  "emergencyAmount": 900000,
+  "investmentAmount": 600000
 }
 ```
 
@@ -690,8 +689,8 @@ curl http://localhost:8080/api/v1/virtual-salary/recommendation \
 {
   "success": true,
   "data": {
-    "recommendedEmergencyRatio": 35.00,
-    "recommendedInvestmentRatio": 20.00,
+    "recommendedEmergencyAmount": 1050000,
+    "recommendedInvestmentAmount": 600000,
     "summary": "최근 수입 안정성이 높아 투자 비중 확대를 추천합니다."
   },
   "meta": { "traceId": "uuid" }
@@ -768,8 +767,7 @@ INFO  VirtualSalaryPaymentServiceImpl: 가상월급 지급 대상 확인: userId
 [외부 통신 없는 API 검증]
   3.  POST /virtual-salary             → 설정 저장 (201)
   4.  GET  /virtual-salary             → 설정 조회 확인
-  5.  POST /virtual-salary (비율 초과) → VIRTUAL_SALARY_002 에러
-  6.  POST /contracts (BUSINESS, 6월)  → contract_id=1, 계산값 확인
+  5.  POST /contracts (BUSINESS, 6월)  → contract_id=1, 계산값 확인
   7.  POST /contracts (ETC, 6월)       → contract_id=2
   8.  POST /contracts (BUSINESS, 5월) → contract_id=3 (summary 테스트용)
   9.  GET  /contracts?date=2026-06-01 → 6월 계약 2건
@@ -805,7 +803,6 @@ INFO  VirtualSalaryPaymentServiceImpl: 가상월급 지급 대상 확인: userId
 | `CONTRACT_001` | 404 | 존재하지 않는 계약입니다 | contractId 조회 실패 |
 | `CONTRACT_002` | 403 | 본인 계약이 아닙니다 | 타인 계약 접근 |
 | `VIRTUAL_SALARY_001` | 404 | 가상월급 설정이 없습니다 | VIRTUAL_SALARY_SETTING 미존재 |
-| `VIRTUAL_SALARY_002` | 400 | 투자 비율과 비상금 비율의 합은 100을 초과할 수 없습니다 | investmentRatio + emergencyRatio > 100 |
 | `VIRTUAL_SALARY_003` | 404 | SALARY 계좌가 연결되어 있지 않습니다 | ACCOUNT_MAPPING SALARY 타입 없음 |
 | `MATCHING_001` | 404 | 매칭 정보를 찾을 수 없습니다 | matchingId 조회 실패 |
 | `MATCHING_002` | 400 | 이미 매칭 처리된 건입니다 | MATCHED / MANUAL_MATCHED 재처리 |
@@ -829,7 +826,7 @@ $TOKEN = $resp.data.accessToken
 # 1. 가상월급 설정 저장
 Invoke-RestMethod -Uri "http://localhost:8080/api/v1/virtual-salary" -Method POST `
   -Headers @{"Authorization"="Bearer $TOKEN"; "Content-Type"="application/json"} `
-  -Body '{"targetSalary":3000000,"payday":25,"emergencyTargetAmount":5000000,"investmentRatio":20,"emergencyRatio":30,"priorityOrder":["SALARY","EMERGENCY","INVESTMENT"]}' |
+  -Body '{"targetSalary":3000000,"payday":25,"emergencyTargetAmount":5000000,"investmentAmount":600000,"emergencyAmount":900000,"priorityOrder":["SALARY","EMERGENCY","INVESTMENT"]}' |
   ConvertTo-Json -Depth 5
 
 # 2. 계약 생성

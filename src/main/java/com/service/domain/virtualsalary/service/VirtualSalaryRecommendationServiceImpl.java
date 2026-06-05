@@ -43,6 +43,7 @@ public class VirtualSalaryRecommendationServiceImpl implements VirtualSalaryReco
 
     AiRecommendationRequest request =
         AiRecommendationRequest.builder()
+            .userId(userId)
             .targetSalary(setting.getTargetSalary())
             .currentBalance(currentBalance)
             .monthlyExpectedIncome(monthlyExpectedIncome)

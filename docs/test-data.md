@@ -211,8 +211,8 @@ curl -X POST http://localhost:8080/api/v1/virtual-salary \
     "targetSalary": 3000000,
     "payday": 25,
     "emergencyTargetAmount": 5000000,
-    "investmentRatio": 20,
-    "emergencyRatio": 30,
+    "investmentAmount": 600000,
+    "emergencyAmount": 900000,
     "priorityOrder": ["SALARY", "EMERGENCY", "INVESTMENT"]
   }'
 ```
@@ -225,8 +225,8 @@ curl -X POST http://localhost:8080/api/v1/virtual-salary \
 | target_salary | 3000000.00 |
 | payday | 25 |
 | emergency_target_amount | 5000000.00 |
-| investment_ratio | 20.00 |
-| emergency_ratio | 30.00 |
+| investment_amount | 600000.00 |
+| emergency_amount | 900000.00 |
 | priority_order | ["SALARY","EMERGENCY","INVESTMENT"] |
 
 ---
@@ -307,8 +307,8 @@ curl -X POST http://localhost:8080/api/v1/virtual-salary \
     "targetSalary": 3500000,
     "payday": 15,
     "emergencyTargetAmount": 6000000,
-    "investmentRatio": 25,
-    "emergencyRatio": 35,
+    "investmentAmount": 750000,
+    "emergencyAmount": 1050000,
     "priorityOrder": ["EMERGENCY", "SALARY", "INVESTMENT"]
   }'
 ```
@@ -320,8 +320,8 @@ curl -X POST http://localhost:8080/api/v1/virtual-salary \
 | target_salary | 3,000,000 | **3,500,000** |
 | payday | 25 | **15** |
 | emergency_target_amount | 5,000,000 | **6,000,000** |
-| investment_ratio | 20.00 | **25.00** |
-| emergency_ratio | 30.00 | **35.00** |
+| investment_amount | 600000.00 | **750000.00** |
+| emergency_amount | 900000.00 | **1050000.00** |
 | priority_order | ["SALARY","EMERGENCY","INVESTMENT"] | **["EMERGENCY","SALARY","INVESTMENT"]** |
 
 ---

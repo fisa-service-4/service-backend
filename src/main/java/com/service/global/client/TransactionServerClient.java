@@ -337,9 +337,15 @@ public class TransactionServerClient {
               .header("x-firebase-uid", firebaseUid)
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
-      return response.getData().getContent();
+      if (response == null || response.getData() == null) {
+        return List.of();
+      }
+      List<StockAccountItem> content = response.getData().getContent();
+      return content != null ? content : List.of();
     } catch (RestClientResponseException e) {
       throw mapError(e);
+    } catch (org.springframework.web.client.RestClientException e) {
+      throw new BusinessException(ErrorCode.STOCK_001);
     }
   }
 
