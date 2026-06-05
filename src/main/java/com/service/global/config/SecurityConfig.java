@@ -27,6 +27,7 @@ public class SecurityConfig {
 
   private static final String[] PUBLIC_URLS = {
     "/api/v1/auth/signup",
+    "/api/v1/auth/admin/signup",
     "/api/v1/auth/phone/send",
     "/api/v1/auth/phone/verify",
     "/api/v1/auth/login",

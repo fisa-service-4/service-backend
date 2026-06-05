@@ -21,9 +21,11 @@ public class StockService {
   }
 
   public StockAccountsResponse getStockAccounts(Long userId) {
-    String firebaseUid = userRepository.findById(userId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_001))
-        .getFirebaseUid();
+    String firebaseUid =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.USER_001))
+            .getFirebaseUid();
     return StockAccountsResponse.from(transactionServerClient.getStockAccounts(firebaseUid));
   }
 }
