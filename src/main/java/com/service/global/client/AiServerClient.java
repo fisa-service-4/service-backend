@@ -16,6 +16,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -44,6 +45,9 @@ public class AiServerClient {
     } catch (ResourceAccessException e) {
       log.error("AI 서버 연결 실패: {}", e.getMessage());
       throw new BusinessException(ErrorCode.AI_002);
+    } catch (RestClientResponseException e) {
+      log.error("AI 서버 에러 응답 (status={}, body={})", e.getStatusCode(), e.getResponseBodyAsString());
+      throw new BusinessException(ErrorCode.AI_001);
     } catch (BusinessException e) {
       throw e;
     } catch (Exception e) {

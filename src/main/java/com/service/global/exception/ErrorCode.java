@@ -72,7 +72,10 @@ public enum ErrorCode {
 
   // FAVORITE
   FAVORITE_001(HttpStatus.NOT_FOUND, "FAVORITE_001", "관심종목 없음"),
-  FAVORITE_002(HttpStatus.CONFLICT, "FAVORITE_002", "이미 등록된 관심종목입니다.");
+  FAVORITE_002(HttpStatus.CONFLICT, "FAVORITE_002", "이미 등록된 관심종목입니다."),
+
+  // SERVER
+  SERVER_001(HttpStatus.SERVICE_UNAVAILABLE, "SERVER_001", "외부 서버와 통신 중 오류가 발생했습니다.");
 
   private final HttpStatus httpStatus;
   private final String code;

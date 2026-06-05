@@ -7,11 +7,14 @@ import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class TransactionServerClient {
@@ -344,8 +347,9 @@ public class TransactionServerClient {
       return content != null ? content : List.of();
     } catch (RestClientResponseException e) {
       throw mapError(e);
-    } catch (org.springframework.web.client.RestClientException e) {
-      throw new BusinessException(ErrorCode.STOCK_001);
+    } catch (ResourceAccessException e) {
+      log.error("증권 서버 연결 실패 (getStockAccounts): {}", e.getMessage());
+      throw new BusinessException(ErrorCode.SERVER_001);
     }
   }
 
