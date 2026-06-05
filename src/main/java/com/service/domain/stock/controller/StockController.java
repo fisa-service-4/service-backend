@@ -3,10 +3,6 @@ package com.service.domain.stock.controller;
 import com.service.domain.stock.dto.response.CashBalanceResponse;
 import com.service.domain.stock.dto.response.StockAccountsResponse;
 import com.service.domain.stock.service.StockService;
-import com.service.domain.user.entity.User;
-import com.service.domain.user.repository.UserRepository;
-import com.service.global.exception.ErrorCode;
-import com.service.global.exception.BusinessException;
 import com.service.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -26,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class StockController {
 
   private final StockService stockService;
-  private final UserRepository userRepository;
 
   @Operation(summary = "예수금 조회")
   @ApiResponses({
@@ -56,8 +51,6 @@ public class StockController {
   public ResponseEntity<ApiResponse<StockAccountsResponse>> getStockAccounts(
       Authentication authentication) {
     Long userId = (Long) authentication.getPrincipal();
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_001));
-    return ResponseEntity.ok(ApiResponse.success(stockService.getStockAccounts(user.getFirebaseUid())));
+    return ResponseEntity.ok(ApiResponse.success(stockService.getStockAccounts(userId)));
   }
 }
