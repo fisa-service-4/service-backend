@@ -26,12 +26,12 @@ public class GlobalExceptionHandler {
     log.error("BusinessException: {}", e.getMessage());
     ErrorCode errorCode = e.getErrorCode();
     String errorLevel = errorCode.getHttpStatus().is5xxServerError() ? "ERROR" : "WARN";
+    String traceId = (String) request.getAttribute("traceId");
+    if (traceId == null) {
+      traceId = UUID.randomUUID().toString();
+    }
     adminLogSaveService.saveSystemErrorLog(
-        UUID.randomUUID().toString(),
-        errorLevel,
-        errorCode.getCode(),
-        errorCode.getMessage(),
-        request.getRequestURI());
+        traceId, errorLevel, errorCode.getCode(), errorCode.getMessage(), request.getRequestURI());
     return ResponseEntity.status(errorCode.getHttpStatus())
         .body(ApiResponse.fail(errorCode.getCode(), errorCode.getMessage()));
   }
@@ -57,8 +57,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleException(
       Exception e, HttpServletRequest request) {
     log.error("Exception: {}", e.getMessage());
+    String traceId = (String) request.getAttribute("traceId");
+    if (traceId == null) {
+      traceId = UUID.randomUUID().toString();
+    }
     adminLogSaveService.saveSystemErrorLog(
-        UUID.randomUUID().toString(),
+        traceId,
         "ERROR",
         "SERVER_ERROR",
         e.getMessage() != null ? e.getMessage() : "알 수 없는 오류",

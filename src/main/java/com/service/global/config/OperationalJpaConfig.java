@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -35,8 +37,16 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class OperationalJpaConfig {
 
   @Primary
+  @Bean(name = "dataSource")
+  @ConfigurationProperties("spring.datasource")
+  public DataSource dataSource() {
+    return DataSourceBuilder.create().build();
+  }
+
+  @Primary
   @Bean
-  public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
+  public LocalContainerEntityManagerFactoryBean entityManagerFactory(
+      @Qualifier("dataSource") DataSource dataSource) {
     LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
     em.setDataSource(dataSource);
     em.setPersistenceUnitName("operational");

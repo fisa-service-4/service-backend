@@ -1,6 +1,7 @@
 package com.service.global.config;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -17,6 +18,7 @@ public class AsyncConfig {
     executor.setMaxPoolSize(5);
     executor.setQueueCapacity(100);
     executor.setThreadNamePrefix("log-async-");
+    executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
     executor.initialize();
     return executor;
   }
