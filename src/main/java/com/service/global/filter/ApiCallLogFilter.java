@@ -34,13 +34,17 @@ public class ApiCallLogFilter extends OncePerRequestFilter {
       filterChain.doFilter(request, response);
     } finally {
       long durationMs = System.currentTimeMillis() - startTime;
-      adminLogSaveService.saveApiCallLog(
-          traceId,
-          request.getRequestURI(),
-          request.getMethod(),
-          String.valueOf(response.getStatus()),
-          durationMs,
-          requestedAt);
+      try {
+        adminLogSaveService.saveApiCallLog(
+            traceId,
+            request.getRequestURI(),
+            request.getMethod(),
+            String.valueOf(response.getStatus()),
+            durationMs,
+            requestedAt);
+      } catch (Exception e) {
+        log.error("API 호출 로그 비동기 저장 요청 실패", e);
+      }
     }
   }
 
