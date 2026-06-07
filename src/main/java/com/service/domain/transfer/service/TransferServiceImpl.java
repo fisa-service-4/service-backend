@@ -2,11 +2,9 @@ package com.service.domain.transfer.service;
 
 import com.service.domain.mydata.repository.LinkedFinancialAccountRepository;
 import com.service.domain.transfer.dto.request.TransferRequest;
-import com.service.domain.transfer.dto.response.TransferApproveResponse;
 import com.service.domain.transfer.dto.response.TransferResponse;
 import com.service.domain.transfer.dto.response.TransferResultResponse;
 import com.service.global.client.TransactionServerClient;
-import com.service.global.client.TransactionServerClient.BankTransferApproveResult;
 import com.service.global.client.TransactionServerClient.BankTransferDetailResult;
 import com.service.global.client.TransactionServerClient.BankTransferResult;
 import com.service.global.exception.BusinessException;
@@ -49,23 +47,6 @@ public class TransferServiceImpl implements TransferService {
         .transferId(result.getTransferId())
         .transferStatus(result.getTransferStatus())
         .requestedAt(result.getRequestedAt())
-        .build();
-  }
-
-  @Override
-  public TransferApproveResponse approveTransfer(Long userId, Long transferId) {
-    BankTransferDetailResult detail = transactionServerClient.getTransferResult(transferId);
-
-    linkedFinancialAccountRepository
-        .findByExternalAccountIdAndUser_UserId(detail.getFromAccountId(), userId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.TRANSFER_004));
-
-    BankTransferApproveResult result = transactionServerClient.approveTransfer(transferId);
-
-    return TransferApproveResponse.builder()
-        .transferId(result.getTransferId())
-        .transferStatus(result.getTransferStatus())
-        .completedAt(result.getCompletedAt())
         .build();
   }
 
