@@ -35,8 +35,6 @@ public enum ErrorCode {
 
   // VIRTUAL_SALARY
   VIRTUAL_SALARY_001(HttpStatus.NOT_FOUND, "VIRTUAL_SALARY_001", "가상월급 설정이 없습니다."),
-  VIRTUAL_SALARY_002(
-      HttpStatus.BAD_REQUEST, "VIRTUAL_SALARY_002", "투자 비율과 비상금 비율의 합은 100을 초과할 수 없습니다."),
   VIRTUAL_SALARY_003(HttpStatus.NOT_FOUND, "VIRTUAL_SALARY_003", "SALARY 계좌가 연결되어 있지 않습니다."),
 
   // MATCHING
@@ -74,7 +72,10 @@ public enum ErrorCode {
 
   // FAVORITE
   FAVORITE_001(HttpStatus.NOT_FOUND, "FAVORITE_001", "관심종목 없음"),
-  FAVORITE_002(HttpStatus.CONFLICT, "FAVORITE_002", "이미 등록된 관심종목입니다.");
+  FAVORITE_002(HttpStatus.CONFLICT, "FAVORITE_002", "이미 등록된 관심종목입니다."),
+
+  // SERVER
+  SERVER_001(HttpStatus.SERVICE_UNAVAILABLE, "SERVER_001", "외부 서버와 통신 중 오류가 발생했습니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
