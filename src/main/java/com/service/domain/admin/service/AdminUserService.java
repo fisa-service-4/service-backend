@@ -66,6 +66,8 @@ public class AdminUserService {
     return (root, query, cb) -> {
       List<Predicate> predicates = new ArrayList<>();
 
+      predicates.add(cb.equal(root.get("role"), User.Role.USER));
+
       if (keyword != null && !keyword.isBlank()) {
         String like = "%" + keyword.toLowerCase() + "%";
         predicates.add(
