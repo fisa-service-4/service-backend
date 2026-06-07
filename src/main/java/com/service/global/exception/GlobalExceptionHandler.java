@@ -26,12 +26,12 @@ public class GlobalExceptionHandler {
     log.error("BusinessException: {}", e.getMessage());
     ErrorCode errorCode = e.getErrorCode();
     String errorLevel = errorCode.getHttpStatus().is5xxServerError() ? "ERROR" : "WARN";
-    String traceId = (String) request.getAttribute("traceId");
-    if (traceId == null) {
-      traceId = UUID.randomUUID().toString();
-    }
     adminLogSaveService.saveSystemErrorLog(
-        traceId, errorLevel, errorCode.getCode(), errorCode.getMessage(), request.getRequestURI());
+        getOrCreateTraceId(request),
+        errorLevel,
+        errorCode.getCode(),
+        errorCode.getMessage(),
+        request.getRequestURI());
     return ResponseEntity.status(errorCode.getHttpStatus())
         .body(ApiResponse.fail(errorCode.getCode(), errorCode.getMessage()));
   }
@@ -57,16 +57,17 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleException(
       Exception e, HttpServletRequest request) {
     log.error("Exception: {}", e.getMessage());
-    String traceId = (String) request.getAttribute("traceId");
-    if (traceId == null) {
-      traceId = UUID.randomUUID().toString();
-    }
     adminLogSaveService.saveSystemErrorLog(
-        traceId,
+        getOrCreateTraceId(request),
         "ERROR",
         "SERVER_ERROR",
         e.getMessage() != null ? e.getMessage() : "알 수 없는 오류",
         request.getRequestURI());
     return ResponseEntity.status(500).body(ApiResponse.fail("SERVER_ERROR", "서버 오류가 발생했습니다."));
+  }
+
+  private String getOrCreateTraceId(HttpServletRequest request) {
+    String traceId = (String) request.getAttribute("traceId");
+    return traceId != null ? traceId : UUID.randomUUID().toString();
   }
 }

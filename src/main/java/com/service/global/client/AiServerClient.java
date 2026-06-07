@@ -68,7 +68,8 @@ public class AiServerClient {
     } finally {
       long durationMs = System.currentTimeMillis() - startTime;
       try {
-        adminLogSaveService.saveAiUsageLog(userId, AI_MODEL_NAME, durationMs, REQUEST_TYPE, success);
+        adminLogSaveService.saveAiUsageLog(
+            userId, AI_MODEL_NAME, durationMs, REQUEST_TYPE, success);
       } catch (Exception e) {
         log.error("AI 사용 로그 비동기 저장 요청 실패", e);
       }

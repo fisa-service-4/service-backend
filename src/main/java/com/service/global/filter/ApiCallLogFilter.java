@@ -28,7 +28,10 @@ public class ApiCallLogFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
-    String traceId = UUID.randomUUID().toString();
+    String traceId = request.getHeader("X-Trace-Id");
+    if (traceId == null || traceId.isEmpty()) {
+      traceId = UUID.randomUUID().toString();
+    }
     request.setAttribute("traceId", traceId);
     LocalDateTime requestedAt = LocalDateTime.now();
     long startTime = System.currentTimeMillis();

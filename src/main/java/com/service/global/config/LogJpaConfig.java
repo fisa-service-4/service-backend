@@ -6,19 +6,21 @@ import jakarta.persistence.EntityManagerFactory;
 import java.util.HashMap;
 import java.util.Map;
 import javax.sql.DataSource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 
+@Slf4j
 @Configuration
 @EnableJpaRepositories(
     basePackages = "com.service.domain.admin.repository",
@@ -70,15 +72,17 @@ public class LogJpaConfig {
   }
 
   @Bean
-  public DataSourceInitializer logDataSourceInitializer(
+  public ApplicationRunner logSchemaInitializer(
       @Qualifier("logDataSource") DataSource dataSource, ResourceLoader resourceLoader) {
-    ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-    populator.addScript(resourceLoader.getResource("classpath:sql/log-schema.sql"));
-    populator.setContinueOnError(true);
-
-    DataSourceInitializer initializer = new DataSourceInitializer();
-    initializer.setDataSource(dataSource);
-    initializer.setDatabasePopulator(populator);
-    return initializer;
+    return args -> {
+      try {
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        populator.addScript(resourceLoader.getResource("classpath:sql/log-schema.sql"));
+        populator.setContinueOnError(true);
+        populator.execute(dataSource);
+      } catch (Exception e) {
+        log.warn("로그 DB 스키마 초기화 실패 - 로그 DB 미기동 상태로 추후 재시도됩니다: {}", e.getMessage());
+      }
+    };
   }
 }

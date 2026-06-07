@@ -9,6 +9,7 @@ import com.service.domain.admin.repository.SystemErrorLogRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AdminLogSaveService {
+
+  @Value("${spring.application.name:service-backend}")
+  private String serviceName;
 
   private final SystemErrorLogRepository systemErrorLogRepository;
   private final AiUsageLogRepository aiUsageLogRepository;
@@ -28,7 +32,7 @@ public class AdminLogSaveService {
       systemErrorLogRepository.save(
           SystemErrorLog.builder()
               .traceId(traceId)
-              .serviceName("service-backend")
+              .serviceName(serviceName)
               .errorLevel(errorLevel)
               .errorCode(errorCode)
               .errorMessage(errorMessage)
@@ -71,7 +75,7 @@ public class AdminLogSaveService {
       apiCallLogRepository.save(
           ApiCallLog.builder()
               .traceId(traceId)
-              .serviceName("service-backend")
+              .serviceName(serviceName)
               .apiName(apiName)
               .httpMethod(httpMethod)
               .responseCode(responseCode)
