@@ -16,8 +16,6 @@ spring:
       schema-locations: classpath:sql/schema.sql
 
   jpa:
-    hibernate:
-      ddl-auto: none
     open-in-view: false
 
   data:
@@ -27,6 +25,12 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
+
+log:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/finance_log
+    username: admin
+    password: 1234
 
 jwt:
   secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256
