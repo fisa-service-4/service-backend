@@ -64,20 +64,6 @@ public class TransactionServerClient {
   // 은행 이체
   // ───────────────────────────────────────────────
 
-  public BankTransferApproveResult approveTransfer(Long transferId) {
-    try {
-      TxResponse<BankTransferApproveResult> response =
-          transactionServerRestClient
-              .post()
-              .uri("/baas/v1/bank/transfers/{transferId}/approve", transferId)
-              .retrieve()
-              .body(new ParameterizedTypeReference<>() {});
-      return response.getData();
-    } catch (RestClientResponseException e) {
-      throw mapError(e);
-    }
-  }
-
   public BankTransferDetailResult getTransferResult(Long transferId) {
     try {
       TxResponse<BankTransferDetailResult> response =
@@ -130,15 +116,6 @@ public class TransactionServerClient {
     private Long transferId;
     private String transferStatus;
     private java.time.LocalDateTime requestedAt;
-  }
-
-  @Getter
-  @NoArgsConstructor
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class BankTransferApproveResult {
-    private Long transferId;
-    private String transferStatus;
-    private java.time.LocalDateTime completedAt;
   }
 
   @Getter

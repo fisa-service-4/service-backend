@@ -1,7 +1,6 @@
 package com.service.domain.transfer.controller;
 
 import com.service.domain.transfer.dto.request.TransferRequest;
-import com.service.domain.transfer.dto.response.TransferApproveResponse;
 import com.service.domain.transfer.dto.response.TransferResponse;
 import com.service.domain.transfer.dto.response.TransferResultResponse;
 import com.service.domain.transfer.service.TransferService;
@@ -48,29 +47,6 @@ public class TransferController {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(
             ApiResponse.success(transferService.requestTransfer(userId, idempotencyKey, request)));
-  }
-
-  @Operation(summary = "이체 승인")
-  @ApiResponses({
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "200",
-        description = "이체 승인 성공"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "403",
-        description = "TRANSFER_004: 본인 이체 건이 아닙니다"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "404",
-        description = "TRANSFER_001: 해당 이체 건을 찾을 수 없습니다"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "409",
-        description = "TRANSFER_003: 이미 처리 완료된 이체입니다")
-  })
-  @PostMapping("/{transferId}/approve")
-  public ResponseEntity<ApiResponse<TransferApproveResponse>> approveTransfer(
-      Authentication authentication, @PathVariable Long transferId) {
-    Long userId = (Long) authentication.getPrincipal();
-    return ResponseEntity.ok(
-        ApiResponse.success(transferService.approveTransfer(userId, transferId)));
   }
 
   @Operation(summary = "이체 결과 조회")
