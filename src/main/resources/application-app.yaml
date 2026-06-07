@@ -34,7 +34,8 @@ jwt:
   refresh-token-expiration: 604800000
 
 firebase:
-  credential-path: woorifis-service-firebase-adminsdk-fbsvc-bf3b482f03.json
+#  credential-path: woorifis-service-firebase-adminsdk-fbsvc-bf3b482f03.json
+  credential-path: file:/app/firebase.json
 
 mydata:
   server:
