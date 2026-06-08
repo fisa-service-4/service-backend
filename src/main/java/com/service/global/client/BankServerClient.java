@@ -51,6 +51,19 @@ public class BankServerClient {
     return body.getData().getBalance();
   }
 
+  public BankAccountDetailData getBankAccountDetail(Long accountId) {
+    String url = mydataServerUrl + "/bank/accounts/" + accountId;
+    ResponseEntity<BankAccountDetailWrapper> response =
+        restTemplate.exchange(
+            url, HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<>() {});
+
+    BankAccountDetailWrapper body = response.getBody();
+    if (body == null || !body.isSuccess() || body.getData() == null) {
+      throw new RuntimeException("mydata-server 계좌 상세 조회 실패: accountId=" + accountId);
+    }
+    return body.getData();
+  }
+
   @Getter
   @NoArgsConstructor
   static class ConnectionsWrapper {
@@ -82,6 +95,7 @@ public class BankServerClient {
     private String bankCode;
     private String accountNumber;
     private String accountName;
+    private BigDecimal cashBalance;
   }
 
   @Getter
@@ -95,6 +109,24 @@ public class BankServerClient {
   @NoArgsConstructor
   static class BankBalanceData {
     private Long accountId;
+    private BigDecimal balance;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  static class BankAccountDetailWrapper {
+    private boolean success;
+    private BankAccountDetailData data;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  public static class BankAccountDetailData {
+    private Long accountId;
+    private String accountNumber;
+    private String accountName;
+    private String bankCode;
+    private String accountStatus;
     private BigDecimal balance;
   }
 }

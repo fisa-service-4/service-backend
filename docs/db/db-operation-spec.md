@@ -266,13 +266,14 @@ AI 채팅, 알림, 가상 월급 등의 데이터를 저장합니다. :contentRe
 
 | 컬럼명              | 데이터 타입        | 설명      | Null 허용 | PK / FK |
 |------------------|---------------|---------|---------|---------|
-| user_id          | BIGINT        | 사용자 ID  | NO      | PK, FK  |
-| target_salary    | DECIMAL(18,2) | 목표 월급   | NO      | -       |
-| payday           | INT           | 월급일     | NO      | -       |
-| investment_ratio | DECIMAL(5,2)  | 투자 비율   | YES     | -       |
-| emergency_ratio  | DECIMAL(5,2)  | 비상금 비율  | YES     | -       |
-| priority_order   | JSON          | 우선순위 설정 | YES     | -       |
-| updated_at       | TIMESTAMP     | 수정일     | NO      | -       |
+| user_id                 | BIGINT        | 사용자 ID        | NO  | PK, FK |
+| target_salary           | DECIMAL(18,2) | 목표 월급        | NO  | -      |
+| payday                  | INT           | 월급일           | NO  | -      |
+| emergency_target_amount | DECIMAL(18,2) | 비상금 목표 금액  | YES | -      |
+| investment_amount       | DECIMAL(18,2) | 투자 이체 고정 금액 | YES | -      |
+| emergency_amount        | DECIMAL(18,2) | 비상금 이체 고정 금액 | YES | -      |
+| priority_order          | JSON          | 우선순위 설정    | YES | -      |
+| updated_at              | TIMESTAMP     | 수정일           | NO  | -      |
 
 ---
 

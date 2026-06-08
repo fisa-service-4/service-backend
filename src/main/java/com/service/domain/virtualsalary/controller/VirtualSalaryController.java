@@ -27,7 +27,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -133,8 +132,8 @@ public class VirtualSalaryController {
   // ─── Virtual Salary Recommendation ───────────────────────────────────────
 
   @Operation(
-      summary = "AI 분배 비율 추천 조회",
-      description = "사용자의 계약 수입, 자산 현황, 가상월급 설정을 기반으로 AI 서버에서 비상금/투자 비율을 추천합니다.")
+      summary = "AI 분배 금액 추천 조회",
+      description = "사용자의 계약 수입, 자산 현황, 가상월급 설정을 기반으로 AI 서버에서 비상금/투자 금액을 추천합니다.")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "200",
@@ -188,17 +187,16 @@ public class VirtualSalaryController {
 
   // ─── Virtual Salary Setting ────────────────────────────────────────────────
 
-  @Operation(summary = "가상월급 설정 조회", description = "현재 사용자의 가상월급 설정을 조회합니다.")
+  @Operation(
+      summary = "가상월급 설정 조회",
+      description = "현재 사용자의 가상월급 설정을 조회합니다. 설정이 없으면 모든 필드가 null인 빈 응답을 반환합니다.")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "200",
-        description = "가상월급 설정 조회 성공"),
+        description = "가상월급 설정 조회 성공 (설정 미존재 시 빈 응답 반환)"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "401",
-        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "404",
-        description = "VIRTUAL_SALARY_001: 가상월급 설정이 없습니다.")
+        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
   })
   @GetMapping("/virtual-salary")
   public ResponseEntity<ApiResponse<VirtualSalarySettingResponse>> getVirtualSalarySetting(
@@ -210,16 +208,14 @@ public class VirtualSalaryController {
 
   @Operation(
       summary = "가상월급 설정 저장",
-      description =
-          "가상월급 설정을 저장합니다. 기존 설정이 없으면 생성하고, 있으면 덮어씁니다(upsert)."
-              + " investmentRatio + emergencyRatio <= 100 정책이 적용됩니다.")
+      description = "가상월급 설정을 저장합니다. 기존 설정이 없으면 생성하고, 있으면 덮어씁니다(upsert).")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "201",
         description = "가상월급 설정 저장 성공"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "400",
-        description = "VALID_001: 입력값 오류 | VIRTUAL_SALARY_002: 투자 비율과 비상금 비율의 합이 100 초과"),
+        description = "VALID_001: 입력값 오류"),
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "401",
         description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
@@ -231,26 +227,5 @@ public class VirtualSalaryController {
     Long userId = (Long) authentication.getPrincipal();
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(ApiResponse.success(virtualSalarySettingService.saveSetting(userId, request)));
-  }
-
-  @Operation(summary = "가상월급 설정 수정", description = "기존 가상월급 설정을 수정합니다. 설정이 없으면 새로 생성합니다(upsert).")
-  @ApiResponses({
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "200",
-        description = "가상월급 설정 수정 성공"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "400",
-        description = "VALID_001: 입력값 오류 | VIRTUAL_SALARY_002: 투자 비율과 비상금 비율의 합이 100 초과"),
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-        responseCode = "401",
-        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
-  })
-  @PatchMapping("/virtual-salary")
-  public ResponseEntity<ApiResponse<VirtualSalarySaveResponse>> updateVirtualSalarySetting(
-      Authentication authentication, @Valid @RequestBody VirtualSalarySettingRequest request) {
-
-    Long userId = (Long) authentication.getPrincipal();
-    return ResponseEntity.ok(
-        ApiResponse.success(virtualSalarySettingService.updateSetting(userId, request)));
   }
 }

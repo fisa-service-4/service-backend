@@ -43,20 +43,22 @@ public class VirtualSalaryRecommendationServiceImpl implements VirtualSalaryReco
 
     AiRecommendationRequest request =
         AiRecommendationRequest.builder()
+            .userId(userId)
             .targetSalary(setting.getTargetSalary())
             .currentBalance(currentBalance)
             .monthlyExpectedIncome(monthlyExpectedIncome)
             .emergencyTargetAmount(setting.getEmergencyTargetAmount())
-            .emergencyRatio(setting.getEmergencyRatio())
-            .investmentRatio(setting.getInvestmentRatio())
+            .emergencyAmount(setting.getEmergencyAmount())
+            .investmentAmount(setting.getInvestmentAmount())
             .build();
 
     AiServerClient.RecommendationResult result =
         aiServerClient.getVirtualSalaryRecommendation(request);
 
     return VirtualSalaryRecommendationResponse.builder()
-        .recommendedEmergencyRatio(result.getRecommendedEmergencyRatio())
-        .recommendedInvestmentRatio(result.getRecommendedInvestmentRatio())
+        .recommendedTargetSalary(result.getRecommendedTargetSalary())
+        .recommendedEmergencyAmount(result.getRecommendedEmergencyAmount())
+        .recommendedInvestmentAmount(result.getRecommendedInvestmentAmount())
         .summary(result.getSummary())
         .build();
   }

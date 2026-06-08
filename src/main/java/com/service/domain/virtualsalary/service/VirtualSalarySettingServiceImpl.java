@@ -7,7 +7,6 @@ import com.service.domain.virtualsalary.entity.VirtualSalarySetting;
 import com.service.domain.virtualsalary.repository.VirtualSalarySettingRepository;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
-import java.math.BigDecimal;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,18 +30,16 @@ public class VirtualSalarySettingServiceImpl implements VirtualSalarySettingServ
                     .targetSalary(setting.getTargetSalary())
                     .payday(setting.getPayday())
                     .emergencyTargetAmount(setting.getEmergencyTargetAmount())
-                    .investmentRatio(setting.getInvestmentRatio())
-                    .emergencyRatio(setting.getEmergencyRatio())
+                    .investmentAmount(setting.getInvestmentAmount())
+                    .emergencyAmount(setting.getEmergencyAmount())
                     .priorityOrder(setting.getPriorityOrder())
                     .updatedAt(setting.getUpdatedAt())
                     .build())
-        .orElse(null);
+        .orElse(VirtualSalarySettingResponse.builder().build());
   }
 
   @Override
   public VirtualSalarySaveResponse saveSetting(Long userId, VirtualSalarySettingRequest request) {
-    validateRatioSum(request.getInvestmentRatio(), request.getEmergencyRatio());
-
     Optional<VirtualSalarySetting> existing = virtualSalarySettingRepository.findById(userId);
 
     if (existing.isPresent()) {
@@ -52,36 +49,26 @@ public class VirtualSalarySettingServiceImpl implements VirtualSalarySettingServ
               request.getTargetSalary(),
               request.getPayday(),
               request.getEmergencyTargetAmount(),
-              request.getInvestmentRatio(),
-              request.getEmergencyRatio(),
+              request.getInvestmentAmount(),
+              request.getEmergencyAmount(),
               request.getPriorityOrder());
     } else {
+      if (request.getTargetSalary() == null || request.getPayday() == null) {
+        throw new BusinessException(ErrorCode.VALID_001);
+      }
       VirtualSalarySetting newSetting =
           VirtualSalarySetting.builder()
               .userId(userId)
               .targetSalary(request.getTargetSalary())
               .payday(request.getPayday())
               .emergencyTargetAmount(request.getEmergencyTargetAmount())
-              .investmentRatio(request.getInvestmentRatio())
-              .emergencyRatio(request.getEmergencyRatio())
+              .investmentAmount(request.getInvestmentAmount())
+              .emergencyAmount(request.getEmergencyAmount())
               .priorityOrder(request.getPriorityOrder())
               .build();
       virtualSalarySettingRepository.save(newSetting);
     }
 
     return VirtualSalarySaveResponse.of();
-  }
-
-  @Override
-  public VirtualSalarySaveResponse updateSetting(Long userId, VirtualSalarySettingRequest request) {
-    return saveSetting(userId, request);
-  }
-
-  private void validateRatioSum(BigDecimal investmentRatio, BigDecimal emergencyRatio) {
-    BigDecimal inv = investmentRatio != null ? investmentRatio : BigDecimal.ZERO;
-    BigDecimal eme = emergencyRatio != null ? emergencyRatio : BigDecimal.ZERO;
-    if (inv.add(eme).compareTo(new BigDecimal("100.00")) > 0) {
-      throw new BusinessException(ErrorCode.VIRTUAL_SALARY_002);
-    }
   }
 }

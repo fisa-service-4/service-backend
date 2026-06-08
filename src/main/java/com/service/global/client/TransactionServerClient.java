@@ -7,11 +7,14 @@ import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class TransactionServerClient {
@@ -55,6 +58,79 @@ public class TransactionServerClient {
     private int size;
     private long totalElements;
     private int totalPages;
+  }
+
+  // ───────────────────────────────────────────────
+  // 은행 이체
+  // ───────────────────────────────────────────────
+
+  public BankTransferDetailResult getTransferResult(Long transferId) {
+    try {
+      TxResponse<BankTransferDetailResult> response =
+          transactionServerRestClient
+              .get()
+              .uri("/baas/v1/bank/transfers/{transferId}", transferId)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  public BankTransferResult bankTransfer(
+      String idempotencyKey,
+      Long fromAccountId,
+      String toBankCode,
+      String toAccountNumber,
+      java.math.BigDecimal transferAmount,
+      String requestedBy) {
+    try {
+      TxResponse<BankTransferResult> response =
+          transactionServerRestClient
+              .post()
+              .uri("/baas/v1/bank/transfers")
+              .header("Idempotency-Key", idempotencyKey)
+              .body(
+                  new BankTransferRequest(
+                      fromAccountId, toBankCode, toAccountNumber, transferAmount, requestedBy))
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  public record BankTransferRequest(
+      Long fromAccountId,
+      String toBankCode,
+      String toAccountNumber,
+      java.math.BigDecimal transferAmount,
+      String requestedBy) {}
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class BankTransferResult {
+    private Long transferId;
+    private String transferStatus;
+    private java.time.LocalDateTime requestedAt;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class BankTransferDetailResult {
+    private Long transferId;
+    private Long fromAccountId;
+    private String toBankCode;
+    private String toAccountNumber;
+    private java.math.BigDecimal transferAmount;
+    private String transferStatus;
+    private String failureReason;
+    private java.time.LocalDateTime requestedAt;
+    private java.time.LocalDateTime completedAt;
   }
 
   // ───────────────────────────────────────────────
@@ -241,9 +317,16 @@ public class TransactionServerClient {
               .header("x-firebase-uid", firebaseUid)
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
-      return response.getData().getContent();
+      if (response == null || response.getData() == null) {
+        return List.of();
+      }
+      List<StockAccountItem> content = response.getData().getContent();
+      return content != null ? content : List.of();
     } catch (RestClientResponseException e) {
       throw mapError(e);
+    } catch (ResourceAccessException e) {
+      log.error("증권 서버 연결 실패 (getStockAccounts): {}", e.getMessage());
+      throw new BusinessException(ErrorCode.SERVER_001);
     }
   }
 

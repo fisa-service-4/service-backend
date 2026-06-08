@@ -12,7 +12,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class VirtualSalaryRecommendationResponse {
 
-  private BigDecimal recommendedEmergencyRatio;
-  private BigDecimal recommendedInvestmentRatio;
+  private BigDecimal recommendedTargetSalary;
+  private BigDecimal recommendedEmergencyAmount;
+  private BigDecimal recommendedInvestmentAmount;
   private String summary;
 }

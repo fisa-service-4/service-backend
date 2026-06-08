@@ -3,6 +3,7 @@ package com.service.domain.virtualsalary.entity;
 import com.service.domain.virtualsalary.enumtype.MatchedBy;
 import com.service.domain.virtualsalary.enumtype.MatchingStatus;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.*;
 
@@ -37,10 +38,31 @@ public class PaymentMatching {
   @Column(name = "matched_at")
   private LocalDateTime matchedAt;
 
-  public void applyManualMatch(Long bankTransactionId) {
+  @Column(name = "transaction_amount", precision = 18, scale = 2)
+  private BigDecimal transactionAmount;
+
+  public void complete(Long bankTransactionId) {
     this.bankTransactionId = bankTransactionId;
-    this.matchingStatus = MatchingStatus.MANUAL_MATCHED;
+    this.matchingStatus = MatchingStatus.MATCHED;
     this.matchedBy = MatchedBy.USER;
     this.matchedAt = LocalDateTime.now();
+  }
+
+  public void autoMatch(Long bankTransactionId, BigDecimal transactionAmount) {
+    this.bankTransactionId = bankTransactionId;
+    this.transactionAmount = transactionAmount;
+    this.matchingStatus = MatchingStatus.MATCHED;
+    this.matchedBy = MatchedBy.SYSTEM;
+    this.matchedAt = LocalDateTime.now();
+  }
+
+  public void linkDeposit(Long bankTransactionId, BigDecimal transactionAmount) {
+    this.bankTransactionId = bankTransactionId;
+    this.transactionAmount = transactionAmount;
+    // 금액 불일치: 입금 정보만 기록하고 TBC 유지
+  }
+
+  public void markFailed() {
+    this.matchingStatus = MatchingStatus.FAILED;
   }
 }

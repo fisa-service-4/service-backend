@@ -71,6 +71,7 @@ public class AccountService {
                     .bankCode(account.getBankCode())
                     .accountNumber(account.getAccountNumber())
                     .accountName(account.getAccountName())
+                    .balance(account.getCashBalance())
                     .accountRole(toApiRole(roleMap.get(account.getAccountId())))
                     .build()));
     return result;

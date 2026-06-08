@@ -9,6 +9,4 @@ public interface VirtualSalarySettingService {
   VirtualSalarySettingResponse getSetting(Long userId);
 
   VirtualSalarySaveResponse saveSetting(Long userId, VirtualSalarySettingRequest request);
-
-  VirtualSalarySaveResponse updateSetting(Long userId, VirtualSalarySettingRequest request);
 }
