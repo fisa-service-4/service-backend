@@ -21,13 +21,21 @@ public class DashboardResponse {
   @Schema(description = "현재 활성 세션(로그인) 수", example = "42")
   private Long activeSessionCount;
 
+  @Schema(description = "오늘 평균 API 응답 시간 (ms)", example = "120")
+  private Long avgApiResponseMs;
+
   public static DashboardResponse of(
-      long todayAiRequests, long todayApiCalls, long todayErrors, long activeSessionCount) {
+      long todayAiRequests,
+      long todayApiCalls,
+      long todayErrors,
+      long activeSessionCount,
+      Long avgApiResponseMs) {
     return DashboardResponse.builder()
         .todayAiRequests(todayAiRequests)
         .todayApiCalls(todayApiCalls)
         .todayErrors(todayErrors)
         .activeSessionCount(activeSessionCount)
+        .avgApiResponseMs(avgApiResponseMs)
         .build();
   }
 }
