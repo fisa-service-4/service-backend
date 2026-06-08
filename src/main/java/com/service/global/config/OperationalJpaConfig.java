@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +15,6 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 
 @Configuration
 @EnableJpaRepositories(
@@ -47,7 +47,8 @@ public class OperationalJpaConfig {
   @Primary
   public DataSource dataSource(DataSourceProperties properties) {
 
-    DataSource ds = properties
+    DataSource ds =
+        properties
             .initializeDataSourceBuilder()
             .type(com.zaxxer.hikari.HikariDataSource.class)
             .build();
@@ -58,6 +59,7 @@ public class OperationalJpaConfig {
 
     return ds;
   }
+
   @Primary
   @Bean
   public LocalContainerEntityManagerFactoryBean entityManagerFactory(
