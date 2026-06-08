@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(
@@ -20,7 +22,7 @@ public class AnalysisRawTransaction {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "raw_transaction_id")
+  @Column(name = "id")
   private Long rawTransactionId;
 
   @Column(name = "user_id", nullable = false)
@@ -52,6 +54,7 @@ public class AnalysisRawTransaction {
   @Column(name = "transaction_at", nullable = false)
   private LocalDateTime transactionAt;
 
+  @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "raw_payload", nullable = false, columnDefinition = "jsonb")
   private String rawPayload;
 

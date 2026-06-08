@@ -15,7 +15,7 @@ public class AnalysisAssetSnapshot {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "snapshot_id")
+  @Column(name = "id")
   private Long snapshotId;
 
   @Column(name = "user_id", nullable = false)
