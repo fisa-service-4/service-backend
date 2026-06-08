@@ -36,11 +36,27 @@ import org.springframework.transaction.PlatformTransactionManager;
     transactionManagerRef = "transactionManager")
 public class OperationalJpaConfig {
 
+//  @Primary
+//  @Bean(name = "dataSource")
+//  @ConfigurationProperties("spring.datasource")
+//  public DataSource dataSource() {
+//    return DataSourceBuilder.create().build();
+//  }
+
   @Primary
   @Bean(name = "dataSource")
   @ConfigurationProperties("spring.datasource")
   public DataSource dataSource() {
-    return DataSourceBuilder.create().build();
+
+    DataSource ds = DataSourceBuilder.create().build();
+
+    System.out.println("DS CLASS = " + ds.getClass());
+
+    if (ds instanceof com.zaxxer.hikari.HikariDataSource h) {
+      System.out.println("JDBC URL = " + h.getJdbcUrl());
+    }
+
+    return ds;
   }
 
   @Primary

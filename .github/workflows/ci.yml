@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - fix/#80-app-profile-datasource
 
 permissions:
   contents: read
