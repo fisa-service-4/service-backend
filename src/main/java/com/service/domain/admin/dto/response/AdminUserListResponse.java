@@ -36,7 +36,10 @@ public class AdminUserListResponse {
   @Schema(description = "최근 로그인 시각", example = "2026-05-17T10:00:00")
   private LocalDateTime lastLoginAt;
 
-  public static AdminUserListResponse of(User user, LocalDateTime lastLoginAt) {
+  @Schema(description = "현재 로그인 여부", example = "true")
+  private Boolean isOnline;
+
+  public static AdminUserListResponse of(User user, LocalDateTime lastLoginAt, Boolean isOnline) {
     UserProfile profile = user.getProfile();
     return AdminUserListResponse.builder()
         .userId(user.getUserId())
@@ -47,6 +50,7 @@ public class AdminUserListResponse {
         .status(user.getStatus().name())
         .createdAt(user.getCreatedAt())
         .lastLoginAt(lastLoginAt)
+        .isOnline(isOnline)
         .build();
   }
 }
