@@ -153,8 +153,14 @@ public class AdminLogService {
     long todayApiCalls = apiCallLogRepository.countByRequestedAtBetween(startOfDay, endOfDay);
     long todayErrors = systemErrorLogRepository.countByCreatedAtBetween(startOfDay, endOfDay);
     long activeSessionCount = countActiveSessionsFromRedis();
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime oneMinuteAgo = now.minusMinutes(1);
+    Double avgMs =
+        apiCallLogRepository.avgDurationMsByRequestedAtBetween(oneMinuteAgo, now);
+    Long avgApiResponseMs = avgMs != null ? Math.round(avgMs) : null;
 
-    return DashboardResponse.of(todayAiRequests, todayApiCalls, todayErrors, activeSessionCount);
+    return DashboardResponse.of(
+        todayAiRequests, todayApiCalls, todayErrors, activeSessionCount, avgApiResponseMs);
   }
 
   private long countActiveSessionsFromRedis() {
