@@ -26,13 +26,19 @@ spring:
       host: redis
       port: 6379
 
+log:
+  datasource:
+    url: jdbc:postgresql://postgres-log:5432/finance_log
+    username: admin
+    password: 1234
+
 jwt:
   secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256
   access-token-expiration: 1800000
   refresh-token-expiration: 604800000
 
 firebase:
-  credential-path: woorifis-service-firebase-adminsdk-fbsvc-bf3b482f03.json
+  credential-path: classpath:woorifis-service-firebase-adminsdk-fbsvc-bf3b482f03.json
 
 mydata:
   server:

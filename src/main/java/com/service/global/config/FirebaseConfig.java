@@ -14,8 +14,7 @@ import org.springframework.core.io.ResourceLoader;
 public class FirebaseConfig {
 
   public FirebaseConfig(
-      @Value("${firebase.credential-path}") String credentialPath,
-      ResourceLoader resourceLoader)
+      @Value("${firebase.credential-path}") String credentialPath, ResourceLoader resourceLoader)
       throws IOException {
 
     if (FirebaseApp.getApps().isEmpty()) {

@@ -1,12 +1,13 @@
 package com.service.global.config;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import jakarta.persistence.EntityManagerFactory;
 import java.util.HashMap;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -36,11 +37,23 @@ import org.springframework.transaction.PlatformTransactionManager;
     transactionManagerRef = "transactionManager")
 public class OperationalJpaConfig {
 
+  @Value("${spring.datasource.url}")
+  private String datasourceUrl;
+
+  @Value("${spring.datasource.username}")
+  private String datasourceUsername;
+
+  @Value("${spring.datasource.password}")
+  private String datasourcePassword;
+
   @Primary
   @Bean(name = "dataSource")
-  @ConfigurationProperties("spring.datasource")
   public DataSource dataSource() {
-    return DataSourceBuilder.create().build();
+    HikariConfig config = new HikariConfig();
+    config.setJdbcUrl(datasourceUrl);
+    config.setUsername(datasourceUsername);
+    config.setPassword(datasourcePassword);
+    return new HikariDataSource(config);
   }
 
   @Primary

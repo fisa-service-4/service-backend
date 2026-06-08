@@ -18,11 +18,16 @@ public class DashboardResponse {
   @Schema(description = "오늘 오류 수", example = "23")
   private Long todayErrors;
 
-  public static DashboardResponse of(long todayAiRequests, long todayApiCalls, long todayErrors) {
+  @Schema(description = "현재 활성 세션(로그인) 수", example = "42")
+  private Long activeSessionCount;
+
+  public static DashboardResponse of(
+      long todayAiRequests, long todayApiCalls, long todayErrors, long activeSessionCount) {
     return DashboardResponse.builder()
         .todayAiRequests(todayAiRequests)
         .todayApiCalls(todayApiCalls)
         .todayErrors(todayErrors)
+        .activeSessionCount(activeSessionCount)
         .build();
   }
 }

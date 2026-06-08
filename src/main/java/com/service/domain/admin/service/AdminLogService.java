@@ -28,6 +28,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,12 +39,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminLogService {
 
   private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+  private static final String REFRESH_TOKEN_PATTERN = "refresh:*";
 
   private final LoginHistoryRepository loginHistoryRepository;
   private final AiUsageLogRepository aiUsageLogRepository;
   private final SystemErrorLogRepository systemErrorLogRepository;
   private final ApiCallLogRepository apiCallLogRepository;
   private final UserRepository userRepository;
+  private final StringRedisTemplate redisTemplate;
 
   @Transactional(readOnly = true)
   public Page<LoginLogResponse> getLoginLogs(
@@ -147,8 +152,21 @@ public class AdminLogService {
     long todayAiRequests = aiUsageLogRepository.countByCreatedAtBetween(startOfDay, endOfDay);
     long todayApiCalls = apiCallLogRepository.countByRequestedAtBetween(startOfDay, endOfDay);
     long todayErrors = systemErrorLogRepository.countByCreatedAtBetween(startOfDay, endOfDay);
+    long activeSessionCount = countActiveSessionsFromRedis();
 
-    return DashboardResponse.of(todayAiRequests, todayApiCalls, todayErrors);
+    return DashboardResponse.of(todayAiRequests, todayApiCalls, todayErrors, activeSessionCount);
+  }
+
+  private long countActiveSessionsFromRedis() {
+    long count = 0;
+    ScanOptions options = ScanOptions.scanOptions().match(REFRESH_TOKEN_PATTERN).count(100).build();
+    try (Cursor<String> cursor = redisTemplate.scan(options)) {
+      while (cursor.hasNext()) {
+        cursor.next();
+        count++;
+      }
+    }
+    return count;
   }
 
   private String resolveUserName(Long userId) {
