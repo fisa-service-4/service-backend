@@ -38,6 +38,13 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class OperationalJpaConfig {
 
   @Value("${spring.datasource.url}")
+  private String datasourceUrl;
+
+  @Value("${spring.datasource.username}")
+  private String datasourceUsername;
+
+  @Value("${spring.datasource.password}")
+  private String datasourcePassword;
   private String url;
 
   @Value("${spring.datasource.username}")
@@ -50,6 +57,9 @@ public class OperationalJpaConfig {
   @Bean(name = "dataSource")
   public DataSource dataSource() {
     HikariConfig config = new HikariConfig();
+    config.setJdbcUrl(datasourceUrl);
+    config.setUsername(datasourceUsername);
+    config.setPassword(datasourcePassword);
     config.setJdbcUrl(url);
     config.setUsername(username);
     config.setPassword(password);
