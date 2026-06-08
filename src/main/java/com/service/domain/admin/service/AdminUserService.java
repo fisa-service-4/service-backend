@@ -17,6 +17,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -40,8 +43,31 @@ public class AdminUserService {
   private final LoginHistoryRepository loginHistoryRepository;
   private final StringRedisTemplate redisTemplate;
 
+  private static final Map<String, String> SORT_FIELD_MAP =
+      Map.of("name", "userName", "createdAt", "createdAt", "email", "email", "status", "status");
+
   @Transactional(readOnly = true)
   public Page<AdminUserListResponse> getUsers(
+      String keyword, User.Status status, String jobType, Pageable pageable) {
+    Specification<User> spec = buildSpec(keyword, status, jobType);
+    return userRepository
+        .findAll(spec, translateSort(pageable))
+        .map(user -> AdminUserListResponse.of(user, null));
+  }
+
+  private Pageable translateSort(Pageable pageable) {
+    List<Sort.Order> orders =
+        StreamSupport.stream(pageable.getSort().spliterator(), false)
+            .map(
+                order -> {
+                  String mapped = SORT_FIELD_MAP.getOrDefault(order.getProperty(), order.getProperty());
+                  return new Sort.Order(order.getDirection(), mapped);
+                })
+            .collect(Collectors.toList());
+    if (orders.isEmpty()) {
+      return pageable;
+    }
+    return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(orders));
       String keyword,
       User.Status status,
       String jobType,
