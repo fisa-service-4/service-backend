@@ -21,7 +21,7 @@ public class DashboardResponse {
   @Schema(description = "현재 활성 세션(로그인) 수", example = "42")
   private Long activeSessionCount;
 
-  @Schema(description = "오늘 평균 API 응답 시간 (ms)", example = "120")
+  @Schema(description = "최근 1분 평균 API 응답 시간 (ms)", example = "120")
   private Long avgApiResponseMs;
 
   public static DashboardResponse of(
