@@ -34,6 +34,12 @@ log:
     username: admin
     password: 1234
 
+analytics:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/finance
+    username: admin
+    password: 1234
+
 jwt:
   secret: local-dev-secret-key-must-be-at-least-256-bits-long-for-hs256
   access-token-expiration: 1800000
