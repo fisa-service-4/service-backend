@@ -15,16 +15,21 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,8 +37,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AdminUserService {
 
+  private static final String REFRESH_TOKEN_PATTERN = "refresh:*";
+
   private final UserRepository userRepository;
   private final LoginHistoryRepository loginHistoryRepository;
+  private final StringRedisTemplate redisTemplate;
 
   private static final Map<String, String> SORT_FIELD_MAP =
       Map.of("name", "userName", "createdAt", "createdAt", "email", "email", "status", "status");
@@ -60,6 +68,25 @@ public class AdminUserService {
       return pageable;
     }
     return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(orders));
+      String keyword,
+      User.Status status,
+      String jobType,
+      String loginStatus,
+      String sort,
+      Pageable pageable) {
+    Set<Long> onlineUserIds = getOnlineUserIds();
+
+    Pageable effectivePageable =
+        "name".equals(sort)
+            ? PageRequest.of(
+                pageable.getPageNumber(), pageable.getPageSize(), Sort.by("userName").ascending())
+            : pageable;
+
+    Specification<User> spec = buildSpec(keyword, status, jobType, loginStatus, onlineUserIds);
+    return userRepository
+        .findAll(spec, effectivePageable)
+        .map(
+            user -> AdminUserListResponse.of(user, null, onlineUserIds.contains(user.getUserId())));
   }
 
   @Transactional(readOnly = true)
@@ -87,7 +114,12 @@ public class AdminUserService {
     user.updateStatus(request.getStatus());
   }
 
-  private Specification<User> buildSpec(String keyword, User.Status status, String jobType) {
+  private Specification<User> buildSpec(
+      String keyword,
+      User.Status status,
+      String jobType,
+      String loginStatus,
+      Set<Long> onlineUserIds) {
     return (root, query, cb) -> {
       List<Predicate> predicates = new ArrayList<>();
 
@@ -110,7 +142,35 @@ public class AdminUserService {
         predicates.add(cb.equal(profileJoin.get("jobType"), jobType));
       }
 
+      if ("ONLINE".equals(loginStatus)) {
+        if (onlineUserIds.isEmpty()) {
+          predicates.add(cb.disjunction());
+        } else {
+          predicates.add(root.get("userId").in(onlineUserIds));
+        }
+      } else if ("OFFLINE".equals(loginStatus)) {
+        if (!onlineUserIds.isEmpty()) {
+          predicates.add(cb.not(root.get("userId").in(onlineUserIds)));
+        }
+      }
+
       return cb.and(predicates.toArray(new Predicate[0]));
     };
+  }
+
+  private Set<Long> getOnlineUserIds() {
+    Set<Long> onlineIds = new HashSet<>();
+    ScanOptions options = ScanOptions.scanOptions().match(REFRESH_TOKEN_PATTERN).count(100).build();
+    try (Cursor<String> cursor = redisTemplate.scan(options)) {
+      while (cursor.hasNext()) {
+        String key = cursor.next();
+        try {
+          onlineIds.add(Long.parseLong(key.replace("refresh:", "")));
+        } catch (NumberFormatException ignored) {
+          // skip malformed keys
+        }
+      }
+    }
+    return onlineIds;
   }
 }
