@@ -45,6 +45,13 @@ public class OperationalJpaConfig {
 
   @Value("${spring.datasource.password}")
   private String datasourcePassword;
+  private String url;
+
+  @Value("${spring.datasource.username}")
+  private String username;
+
+  @Value("${spring.datasource.password}")
+  private String password;
 
   @Primary
   @Bean(name = "dataSource")
@@ -53,6 +60,9 @@ public class OperationalJpaConfig {
     config.setJdbcUrl(datasourceUrl);
     config.setUsername(datasourceUsername);
     config.setPassword(datasourcePassword);
+    config.setJdbcUrl(url);
+    config.setUsername(username);
+    config.setPassword(password);
     return new HikariDataSource(config);
   }
 
