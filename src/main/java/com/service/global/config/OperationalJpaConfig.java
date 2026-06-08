@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -36,11 +36,24 @@ import org.springframework.transaction.PlatformTransactionManager;
     transactionManagerRef = "transactionManager")
 public class OperationalJpaConfig {
 
+  @Bean
   @Primary
-  @Bean(name = "dataSource")
   @ConfigurationProperties("spring.datasource")
-  public DataSource dataSource() {
-    return DataSourceBuilder.create().build();
+  public DataSourceProperties dataSourceProperties() {
+    return new DataSourceProperties();
+  }
+
+  @Bean(name = "dataSource")
+  @Primary
+  public DataSource dataSource(DataSourceProperties properties) {
+
+    DataSource ds =
+        properties
+            .initializeDataSourceBuilder()
+            .type(com.zaxxer.hikari.HikariDataSource.class)
+            .build();
+
+    return ds;
   }
 
   @Primary
