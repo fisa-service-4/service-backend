@@ -18,9 +18,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -48,26 +48,6 @@ public class AdminUserService {
 
   @Transactional(readOnly = true)
   public Page<AdminUserListResponse> getUsers(
-      String keyword, User.Status status, String jobType, Pageable pageable) {
-    Specification<User> spec = buildSpec(keyword, status, jobType);
-    return userRepository
-        .findAll(spec, translateSort(pageable))
-        .map(user -> AdminUserListResponse.of(user, null));
-  }
-
-  private Pageable translateSort(Pageable pageable) {
-    List<Sort.Order> orders =
-        StreamSupport.stream(pageable.getSort().spliterator(), false)
-            .map(
-                order -> {
-                  String mapped = SORT_FIELD_MAP.getOrDefault(order.getProperty(), order.getProperty());
-                  return new Sort.Order(order.getDirection(), mapped);
-                })
-            .collect(Collectors.toList());
-    if (orders.isEmpty()) {
-      return pageable;
-    }
-    return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(orders));
       String keyword,
       User.Status status,
       String jobType,
@@ -76,17 +56,35 @@ public class AdminUserService {
       Pageable pageable) {
     Set<Long> onlineUserIds = getOnlineUserIds();
 
-    Pageable effectivePageable =
-        "name".equals(sort)
-            ? PageRequest.of(
-                pageable.getPageNumber(), pageable.getPageSize(), Sort.by("userName").ascending())
-            : pageable;
+    Pageable effectivePageable;
+    if ("name".equals(sort)) {
+      effectivePageable =
+          PageRequest.of(
+              pageable.getPageNumber(), pageable.getPageSize(), Sort.by("userName").ascending());
+    } else {
+      effectivePageable = translateSort(pageable);
+    }
 
     Specification<User> spec = buildSpec(keyword, status, jobType, loginStatus, onlineUserIds);
     return userRepository
         .findAll(spec, effectivePageable)
-        .map(
-            user -> AdminUserListResponse.of(user, null, onlineUserIds.contains(user.getUserId())));
+        .map(user -> AdminUserListResponse.of(user, null, onlineUserIds.contains(user.getUserId())));
+  }
+
+  private Pageable translateSort(Pageable pageable) {
+    List<Sort.Order> orders =
+        StreamSupport.stream(pageable.getSort().spliterator(), false)
+            .map(
+                order -> {
+                  String mapped =
+                      SORT_FIELD_MAP.getOrDefault(order.getProperty(), order.getProperty());
+                  return new Sort.Order(order.getDirection(), mapped);
+                })
+            .collect(Collectors.toList());
+    if (orders.isEmpty()) {
+      return pageable;
+    }
+    return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(orders));
   }
 
   @Transactional(readOnly = true)
@@ -102,7 +100,9 @@ public class AdminUserService {
             .map(LoginHistory::getLoggedAt)
             .orElse(null);
 
-    return AdminUserDetailResponse.of(user, lastLoginAt);
+    boolean isOnline = redisTemplate.hasKey("refresh:" + userId);
+
+    return AdminUserDetailResponse.of(user, lastLoginAt, isOnline);
   }
 
   @Transactional
