@@ -6,7 +6,6 @@ import java.util.Map;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -15,6 +14,7 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 
 @Configuration
 @EnableJpaRepositories(
@@ -36,29 +36,28 @@ import org.springframework.transaction.PlatformTransactionManager;
     transactionManagerRef = "transactionManager")
 public class OperationalJpaConfig {
 
-//  @Primary
-//  @Bean(name = "dataSource")
-//  @ConfigurationProperties("spring.datasource")
-//  public DataSource dataSource() {
-//    return DataSourceBuilder.create().build();
-//  }
-
+  @Bean
   @Primary
-  @Bean(name = "dataSource")
   @ConfigurationProperties("spring.datasource")
-  public DataSource dataSource() {
+  public DataSourceProperties dataSourceProperties() {
+    return new DataSourceProperties();
+  }
 
-    DataSource ds = DataSourceBuilder.create().build();
+  @Bean(name = "dataSource")
+  @Primary
+  public DataSource dataSource(DataSourceProperties properties) {
 
-    System.out.println("DS CLASS = " + ds.getClass());
+    DataSource ds = properties
+            .initializeDataSourceBuilder()
+            .type(com.zaxxer.hikari.HikariDataSource.class)
+            .build();
 
     if (ds instanceof com.zaxxer.hikari.HikariDataSource h) {
-      System.out.println("JDBC URL = " + h.getJdbcUrl());
+      System.out.println("FIXED JDBC URL = " + h.getJdbcUrl());
     }
 
     return ds;
   }
-
   @Primary
   @Bean
   public LocalContainerEntityManagerFactoryBean entityManagerFactory(
