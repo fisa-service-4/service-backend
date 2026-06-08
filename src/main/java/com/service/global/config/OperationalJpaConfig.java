@@ -53,10 +53,6 @@ public class OperationalJpaConfig {
             .type(com.zaxxer.hikari.HikariDataSource.class)
             .build();
 
-    if (ds instanceof com.zaxxer.hikari.HikariDataSource h) {
-      System.out.println("FIXED JDBC URL = " + h.getJdbcUrl());
-    }
-
     return ds;
   }
 
