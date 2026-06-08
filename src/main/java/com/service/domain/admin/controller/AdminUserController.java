@@ -38,10 +38,12 @@ public class AdminUserController {
           @RequestParam(required = false) String keyword,
           @RequestParam(required = false) User.Status status,
           @RequestParam(required = false) String jobType,
+          @RequestParam(required = false) String loginStatus,
+          @RequestParam(required = false) String sort,
           @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
     return ResponseEntity.ok(
         com.service.global.response.ApiResponse.success(
-            adminUserService.getUsers(keyword, status, jobType, pageable)));
+            adminUserService.getUsers(keyword, status, jobType, loginStatus, sort, pageable)));
   }
 
   @Operation(summary = "사용자 상세 조회")
