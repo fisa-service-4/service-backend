@@ -100,7 +100,7 @@ public class AdminUserService {
             .map(LoginHistory::getLoggedAt)
             .orElse(null);
 
-    boolean isOnline = redisTemplate.hasKey("refresh:" + userId);
+    boolean isOnline = Boolean.TRUE.equals(redisTemplate.hasKey("refresh:" + userId));
 
     return AdminUserDetailResponse.of(user, lastLoginAt, isOnline);
   }
