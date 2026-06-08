@@ -16,9 +16,14 @@ import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,11 +35,31 @@ public class AdminUserService {
   private final UserRepository userRepository;
   private final LoginHistoryRepository loginHistoryRepository;
 
+  private static final Map<String, String> SORT_FIELD_MAP =
+      Map.of("name", "userName", "createdAt", "createdAt", "email", "email", "status", "status");
+
   @Transactional(readOnly = true)
   public Page<AdminUserListResponse> getUsers(
       String keyword, User.Status status, String jobType, Pageable pageable) {
     Specification<User> spec = buildSpec(keyword, status, jobType);
-    return userRepository.findAll(spec, pageable).map(user -> AdminUserListResponse.of(user, null));
+    return userRepository
+        .findAll(spec, translateSort(pageable))
+        .map(user -> AdminUserListResponse.of(user, null));
+  }
+
+  private Pageable translateSort(Pageable pageable) {
+    List<Sort.Order> orders =
+        StreamSupport.stream(pageable.getSort().spliterator(), false)
+            .map(
+                order -> {
+                  String mapped = SORT_FIELD_MAP.getOrDefault(order.getProperty(), order.getProperty());
+                  return new Sort.Order(order.getDirection(), mapped);
+                })
+            .collect(Collectors.toList());
+    if (orders.isEmpty()) {
+      return pageable;
+    }
+    return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(orders));
   }
 
   @Transactional(readOnly = true)
