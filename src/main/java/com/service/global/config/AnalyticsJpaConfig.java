@@ -80,7 +80,7 @@ public class AnalyticsJpaConfig {
         populator.setContinueOnError(true);
         populator.execute(dataSource);
       } catch (Exception e) {
-        log.warn("분석 DB 스키마 초기화 실패 - 분석 DB 미기동 상태로 추후 재시도됩니다: {}", e.getMessage());
+        log.warn("분석 DB 스키마 초기화 실패 - 분석 DB가 미기동 상태이거나 연결할 수 없습니다: {}", e.getMessage());
       }
     };
   }
