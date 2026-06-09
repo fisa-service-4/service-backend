@@ -11,12 +11,6 @@ public class ServiceHealthClient {
 
   private final RestClient healthCheckRestClient;
 
-  @Value("${bank-server.url}")
-  private String bankServerUrl;
-
-  @Value("${stock-server.url}")
-  private String stockServerUrl;
-
   @Value("${transaction-server.url}")
   private String transactionServerUrl;
 
@@ -31,11 +25,11 @@ public class ServiceHealthClient {
   }
 
   public ServiceHealthResponse checkBankServer() {
-    return check("bank-server", bankServerUrl + "/internal/v1/bank/health");
+    return check("bank-server", transactionServerUrl + "/baas/v1/health/bank");
   }
 
   public ServiceHealthResponse checkStockServer() {
-    return check("stock-server", stockServerUrl + "/internal/v1/stock/health");
+    return check("stock-server", transactionServerUrl + "/baas/v1/health/stock");
   }
 
   public ServiceHealthResponse checkTransactionServer() {
