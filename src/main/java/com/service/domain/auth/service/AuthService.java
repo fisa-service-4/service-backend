@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import com.service.domain.auth.dto.request.*;
 import com.service.domain.auth.dto.response.LoginResponse;
+import com.service.domain.auth.dto.response.PinStatusResponse;
 import com.service.domain.auth.dto.response.SignupResponse;
 import com.service.domain.auth.dto.response.TokenResponse;
 import com.service.domain.auth.entity.PinAuth;
@@ -248,7 +249,14 @@ public class AuthService {
     pinAuthRepository.save(pinAuth);
   }
 
-  @Transactional
+  public PinStatusResponse getPinStatus(Long userId) {
+    return pinAuthRepository
+        .findByUserId(userId)
+        .map(pinAuth -> PinStatusResponse.of(pinAuth.getLockedYn(), pinAuth.getFailCount()))
+        .orElse(PinStatusResponse.of(false, 0));
+  }
+
+  @Transactional(noRollbackFor = BusinessException.class)
   public void verifyPin(Long userId, PinVerifyRequest request) {
     PinAuth pinAuth =
         pinAuthRepository
@@ -260,13 +268,17 @@ public class AuthService {
     }
     if (!passwordEncoder.matches(request.getPin(), pinAuth.getPinHash())) {
       pinAuth.fail();
+      if (Boolean.TRUE.equals(pinAuth.getLockedYn())) {
+        pinAuth.getUser().updateStatus(User.Status.LOCKED);
+        throw new BusinessException(ErrorCode.AUTH_009);
+      }
       throw new BusinessException(ErrorCode.AUTH_008);
     }
 
     pinAuth.resetFailCount();
   }
 
-  @Transactional
+  @Transactional(noRollbackFor = BusinessException.class)
   public void changePin(Long userId, PinChangeRequest request) {
     PinAuth pinAuth =
         pinAuthRepository

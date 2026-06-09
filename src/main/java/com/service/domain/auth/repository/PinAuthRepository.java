@@ -15,4 +15,6 @@ public interface PinAuthRepository extends JpaRepository<PinAuth, Long> {
   // PIN 등록 여부 확인
   // PIN 등록 API (POST /auth/pin) - 이미 등록된 PIN이 있는지 확인
   boolean existsByUserId(Long userId);
+
+  long countByLockedYnTrue();
 }

@@ -5,6 +5,7 @@ import com.service.domain.admin.dto.response.AdminUserDetailResponse;
 import com.service.domain.admin.dto.response.AdminUserListResponse;
 import com.service.domain.admin.entity.LoginHistory;
 import com.service.domain.admin.repository.LoginHistoryRepository;
+import com.service.domain.auth.repository.PinAuthRepository;
 import com.service.domain.user.entity.User;
 import com.service.domain.user.entity.UserProfile;
 import com.service.domain.user.repository.UserRepository;
@@ -41,6 +42,7 @@ public class AdminUserService {
 
   private final UserRepository userRepository;
   private final LoginHistoryRepository loginHistoryRepository;
+  private final PinAuthRepository pinAuthRepository;
   private final StringRedisTemplate redisTemplate;
 
   private static final Map<String, String> SORT_FIELD_MAP =
@@ -68,7 +70,8 @@ public class AdminUserService {
     Specification<User> spec = buildSpec(keyword, status, jobType, loginStatus, onlineUserIds);
     return userRepository
         .findAll(spec, effectivePageable)
-        .map(user -> AdminUserListResponse.of(user, null, onlineUserIds.contains(user.getUserId())));
+        .map(
+            user -> AdminUserListResponse.of(user, null, onlineUserIds.contains(user.getUserId())));
   }
 
   private Pageable translateSort(Pageable pageable) {
@@ -111,6 +114,10 @@ public class AdminUserService {
         userRepository
             .findById(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_001));
+    if (User.Status.ACTIVE.equals(request.getStatus())
+        && User.Status.LOCKED.equals(user.getStatus())) {
+      pinAuthRepository.findByUserId(userId).ifPresent(pinAuth -> pinAuth.unlock());
+    }
     user.updateStatus(request.getStatus());
   }
 

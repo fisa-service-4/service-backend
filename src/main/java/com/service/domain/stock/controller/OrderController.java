@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,11 +47,15 @@ public class OrderController {
   })
   @PostMapping
   public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
+      Authentication authentication,
       @RequestHeader("Idempotency-Key") String idempotencyKey,
       @RequestParam Long accountId,
       @Valid @RequestBody OrderCreateRequest request) {
+    Long userId = (Long) authentication.getPrincipal();
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success(orderService.createOrder(idempotencyKey, accountId, request)));
+        .body(
+            ApiResponse.success(
+                orderService.createOrder(userId, idempotencyKey, accountId, request)));
   }
 
   @Operation(summary = "주문 상세 조회")
@@ -99,8 +104,11 @@ public class OrderController {
   })
   @PostMapping("/{orderId}/cancel")
   public ResponseEntity<ApiResponse<OrderCancelResponse>> cancelOrder(
-      @RequestHeader("Idempotency-Key") String idempotencyKey, @PathVariable Long orderId) {
+      Authentication authentication,
+      @RequestHeader("Idempotency-Key") String idempotencyKey,
+      @PathVariable Long orderId) {
+    Long userId = (Long) authentication.getPrincipal();
     return ResponseEntity.ok(
-        ApiResponse.success(orderService.cancelOrder(idempotencyKey, orderId)));
+        ApiResponse.success(orderService.cancelOrder(userId, idempotencyKey, orderId)));
   }
 }
