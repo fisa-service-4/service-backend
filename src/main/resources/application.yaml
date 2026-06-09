@@ -50,9 +50,14 @@ mydata:
   server:
     url: http://localhost:8084/mydata/v1
 
-
 transaction-server:
   url: http://transaction-server:8083
+
+bank-server:
+  url: http://localhost:8081
+
+stock-server:
+  url: http://localhost:8082
 
 ai:
   server:

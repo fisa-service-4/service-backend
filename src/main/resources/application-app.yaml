@@ -57,6 +57,12 @@ ai:
   server:
     url: http://service-ai-server:8000/api/v1/ai
 
+bank-server:
+  url: http://bank-server:8081
+
+stock-server:
+  url: http://stock-server:8082
+
 # onpremise transaction server
 transaction-server:
   url: http://10.10.4.107:8083
