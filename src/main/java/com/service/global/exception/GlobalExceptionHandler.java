@@ -29,8 +29,7 @@ public class GlobalExceptionHandler {
     ErrorCode errorCode = e.getErrorCode();
     String errorLevel = errorCode.getHttpStatus().is5xxServerError() ? "ERROR" : "WARN";
     boolean isLoginAuthError =
-        ErrorCode.AUTH_003.equals(errorCode)
-            && request.getRequestURI().contains("/auth/login");
+        ErrorCode.AUTH_003.equals(errorCode) && request.getRequestURI().contains("/auth/login");
     if (!isLoginAuthError) {
       Long userId = extractUserIdFromSecurity();
       adminLogSaveService.saveSystemErrorLog(
