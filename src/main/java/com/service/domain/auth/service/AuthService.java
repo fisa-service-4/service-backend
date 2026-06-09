@@ -3,6 +3,7 @@ package com.service.domain.auth.service;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
+import com.service.domain.admin.service.AdminLogSaveService;
 import com.service.domain.auth.dto.request.*;
 import com.service.domain.auth.dto.response.LoginResponse;
 import com.service.domain.auth.dto.response.PinStatusResponse;
@@ -19,6 +20,7 @@ import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import com.service.global.security.JwtProvider;
 import java.security.SecureRandom;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,7 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final StringRedisTemplate redisTemplate;
   private final TransactionServerClient transactionServerClient;
+  private final AdminLogSaveService adminLogSaveService;
 
   @Transactional
   public SignupResponse adminSignup(AdminSignupRequest request) {
@@ -168,14 +171,21 @@ public class AuthService {
   }
 
   public LoginResponse login(LoginRequest request) {
-    User user =
-        userRepository
-            .findByEmail(request.getEmail())
-            .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_003));
-
-    if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+    Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+    if (userOpt.isEmpty()) {
+      adminLogSaveService.saveSystemErrorLog(
+          null, "WARN", ErrorCode.AUTH_003.getCode(),
+          ErrorCode.AUTH_003.getMessage(), "/api/v1/auth/login", null);
       throw new BusinessException(ErrorCode.AUTH_003);
     }
+    User user = userOpt.get();
+    if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+      adminLogSaveService.saveSystemErrorLog(
+          null, "WARN", ErrorCode.AUTH_003.getCode(),
+          ErrorCode.AUTH_003.getMessage(), "/api/v1/auth/login", user.getUserId());
+      throw new BusinessException(ErrorCode.AUTH_003);
+    }
+    adminLogSaveService.resolveLoginFailureLogs(user.getUserId());
 
     String accessToken = jwtProvider.generateAccessToken(user.getUserId(), user.getRole().name());
     String refreshToken = jwtProvider.generateRefreshToken(user.getUserId());

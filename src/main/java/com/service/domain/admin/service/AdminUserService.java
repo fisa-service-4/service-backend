@@ -114,8 +114,7 @@ public class AdminUserService {
         userRepository
             .findById(userId)
             .orElseThrow(() -> new BusinessException(ErrorCode.USER_001));
-    if (User.Status.ACTIVE.equals(request.getStatus())
-        && User.Status.LOCKED.equals(user.getStatus())) {
+    if (User.Status.ACTIVE.equals(request.getStatus())) {
       pinAuthRepository.findByUserId(userId).ifPresent(pinAuth -> pinAuth.unlock());
     }
     user.updateStatus(request.getStatus());

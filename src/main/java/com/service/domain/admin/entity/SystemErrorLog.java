@@ -17,6 +17,9 @@ public class SystemErrorLog {
   @Column(name = "error_log_id")
   private Long errorLogId;
 
+  @Column(name = "user_id")
+  private Long userId;
+
   @Column(name = "trace_id", length = 255)
   private String traceId;
 

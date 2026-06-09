@@ -30,7 +30,7 @@ spring:
 
 log:
   datasource:
-    url: jdbc:postgresql://postgres:5432/finance
+    url: jdbc:postgresql://postgres-log:5432/finance_log
     username: admin
     password: 1234
 
