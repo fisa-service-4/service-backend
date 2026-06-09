@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -26,12 +27,19 @@ public class AdminLogSaveService {
   private final ApiCallLogRepository apiCallLogRepository;
 
   @Async("logTaskExecutor")
+  @Transactional("logTransactionManager")
   public void saveSystemErrorLog(
-      String traceId, String errorLevel, String errorCode, String errorMessage, String requestUri) {
+      String traceId,
+      String errorLevel,
+      String errorCode,
+      String errorMessage,
+      String requestUri,
+      Long userId) {
     try {
       systemErrorLogRepository.save(
           SystemErrorLog.builder()
               .traceId(traceId)
+              .userId(userId)
               .serviceName(serviceName)
               .errorLevel(errorLevel)
               .errorCode(errorCode)
@@ -42,6 +50,17 @@ public class AdminLogSaveService {
               .build());
     } catch (Exception e) {
       log.error("시스템 에러 로그 저장 실패: {}", e.getMessage());
+    }
+  }
+
+  @Async("logTaskExecutor")
+  @Transactional("logTransactionManager")
+  public void resolveLoginFailureLogs(Long userId) {
+    try {
+      systemErrorLogRepository.resolveAllByUserIdAndErrorCode(
+          userId, "AUTH_003", LocalDateTime.now());
+    } catch (Exception e) {
+      log.error("로그인 성공 시 AUTH_003 로그 자동 해결 실패: {}", e.getMessage());
     }
   }
 

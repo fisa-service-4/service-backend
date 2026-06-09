@@ -7,6 +7,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
@@ -26,12 +28,19 @@ public class GlobalExceptionHandler {
     log.error("BusinessException: {}", e.getMessage());
     ErrorCode errorCode = e.getErrorCode();
     String errorLevel = errorCode.getHttpStatus().is5xxServerError() ? "ERROR" : "WARN";
-    adminLogSaveService.saveSystemErrorLog(
-        getOrCreateTraceId(request),
-        errorLevel,
-        errorCode.getCode(),
-        errorCode.getMessage(),
-        request.getRequestURI());
+    boolean isLoginAuthError =
+        ErrorCode.AUTH_003.equals(errorCode)
+            && request.getRequestURI().contains("/auth/login");
+    if (!isLoginAuthError) {
+      Long userId = extractUserIdFromSecurity();
+      adminLogSaveService.saveSystemErrorLog(
+          getOrCreateTraceId(request),
+          errorLevel,
+          errorCode.getCode(),
+          errorCode.getMessage(),
+          request.getRequestURI(),
+          userId);
+    }
     return ResponseEntity.status(errorCode.getHttpStatus())
         .body(ApiResponse.fail(errorCode.getCode(), errorCode.getMessage()));
   }
@@ -62,12 +71,21 @@ public class GlobalExceptionHandler {
         "ERROR",
         "SERVER_ERROR",
         e.getMessage() != null ? e.getMessage() : "알 수 없는 오류",
-        request.getRequestURI());
+        request.getRequestURI(),
+        null);
     return ResponseEntity.status(500).body(ApiResponse.fail("SERVER_ERROR", "서버 오류가 발생했습니다."));
   }
 
   private String getOrCreateTraceId(HttpServletRequest request) {
     String traceId = (String) request.getAttribute("traceId");
     return traceId != null ? traceId : UUID.randomUUID().toString();
+  }
+
+  private Long extractUserIdFromSecurity() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth != null && auth.getPrincipal() instanceof Long) {
+      return (Long) auth.getPrincipal();
+    }
+    return null;
   }
 }
