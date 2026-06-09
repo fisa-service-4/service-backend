@@ -14,6 +14,7 @@ import com.service.domain.admin.repository.AiUsageLogRepository;
 import com.service.domain.admin.repository.ApiCallLogRepository;
 import com.service.domain.admin.repository.LoginHistoryRepository;
 import com.service.domain.admin.repository.SystemErrorLogRepository;
+import com.service.domain.auth.repository.PinAuthRepository;
 import com.service.domain.user.repository.UserRepository;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
@@ -46,6 +47,7 @@ public class AdminLogService {
   private final SystemErrorLogRepository systemErrorLogRepository;
   private final ApiCallLogRepository apiCallLogRepository;
   private final UserRepository userRepository;
+  private final PinAuthRepository pinAuthRepository;
   private final StringRedisTemplate redisTemplate;
 
   @Transactional(readOnly = true)
@@ -155,12 +157,19 @@ public class AdminLogService {
     long activeSessionCount = countActiveSessionsFromRedis();
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime oneMinuteAgo = now.minusMinutes(1);
-    Double avgMs =
-        apiCallLogRepository.avgDurationMsByRequestedAtBetween(oneMinuteAgo, now);
+    Double avgMs = apiCallLogRepository.avgDurationMsByRequestedAtBetween(oneMinuteAgo, now);
     Long avgApiResponseMs = avgMs != null ? Math.round(avgMs) : null;
+    long suspendedUserCount = pinAuthRepository.countByLockedYnTrue();
+    long todayNewUserCount = userRepository.countByCreatedAtBetween(startOfDay, endOfDay);
 
     return DashboardResponse.of(
-        todayAiRequests, todayApiCalls, todayErrors, activeSessionCount, avgApiResponseMs);
+        todayAiRequests,
+        todayApiCalls,
+        todayErrors,
+        activeSessionCount,
+        avgApiResponseMs,
+        suspendedUserCount,
+        todayNewUserCount);
   }
 
   private long countActiveSessionsFromRedis() {

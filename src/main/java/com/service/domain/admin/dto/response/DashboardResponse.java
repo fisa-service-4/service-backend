@@ -24,18 +24,28 @@ public class DashboardResponse {
   @Schema(description = "최근 1분 평균 API 응답 시간 (ms)", example = "120")
   private Long avgApiResponseMs;
 
+  @Schema(description = "PIN 정지 회원 수", example = "3")
+  private Long suspendedUserCount;
+
+  @Schema(description = "오늘 신규 가입 회원 수", example = "5")
+  private Long todayNewUserCount;
+
   public static DashboardResponse of(
       long todayAiRequests,
       long todayApiCalls,
       long todayErrors,
       long activeSessionCount,
-      Long avgApiResponseMs) {
+      Long avgApiResponseMs,
+      long suspendedUserCount,
+      long todayNewUserCount) {
     return DashboardResponse.builder()
         .todayAiRequests(todayAiRequests)
         .todayApiCalls(todayApiCalls)
         .todayErrors(todayErrors)
         .activeSessionCount(activeSessionCount)
         .avgApiResponseMs(avgApiResponseMs)
+        .suspendedUserCount(suspendedUserCount)
+        .todayNewUserCount(todayNewUserCount)
         .build();
   }
 }

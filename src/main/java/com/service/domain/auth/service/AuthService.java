@@ -248,7 +248,7 @@ public class AuthService {
     pinAuthRepository.save(pinAuth);
   }
 
-  @Transactional
+  @Transactional(noRollbackFor = BusinessException.class)
   public void verifyPin(Long userId, PinVerifyRequest request) {
     PinAuth pinAuth =
         pinAuthRepository
@@ -260,13 +260,17 @@ public class AuthService {
     }
     if (!passwordEncoder.matches(request.getPin(), pinAuth.getPinHash())) {
       pinAuth.fail();
+      if (Boolean.TRUE.equals(pinAuth.getLockedYn())) {
+        pinAuth.getUser().updateStatus(User.Status.LOCKED);
+        throw new BusinessException(ErrorCode.AUTH_009);
+      }
       throw new BusinessException(ErrorCode.AUTH_008);
     }
 
     pinAuth.resetFailCount();
   }
 
-  @Transactional
+  @Transactional(noRollbackFor = BusinessException.class)
   public void changePin(Long userId, PinChangeRequest request) {
     PinAuth pinAuth =
         pinAuthRepository
