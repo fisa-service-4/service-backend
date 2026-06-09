@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
     log.error("BusinessException: {}", e.getMessage());
     ErrorCode errorCode = e.getErrorCode();
     String errorLevel = errorCode.getHttpStatus().is5xxServerError() ? "ERROR" : "WARN";
-    if (!ErrorCode.AUTH_003.equals(errorCode)) {
+    if (errorCode != ErrorCode.AUTH_003) {
       Long userId = extractUserIdFromSecurity();
       adminLogSaveService.saveSystemErrorLog(
           getOrCreateTraceId(request),
