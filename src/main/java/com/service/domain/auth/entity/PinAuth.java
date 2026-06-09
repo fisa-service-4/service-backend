@@ -56,4 +56,10 @@ public class PinAuth {
   public void resetFailCount() {
     this.failCount = 0;
   }
+
+  public void unlock() {
+    this.failCount = 0;
+    this.lockedYn = false;
+    this.lockedAt = null;
+  }
 }
