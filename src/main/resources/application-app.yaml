@@ -60,4 +60,4 @@ ai:
 
 # onpremise transaction server
 transaction-server:
-  url: http://10.10.4.107:8083
+  url: http://transaction-server:8083

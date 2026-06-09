@@ -5,6 +5,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import com.service.domain.auth.dto.request.*;
 import com.service.domain.auth.dto.response.LoginResponse;
+import com.service.domain.auth.dto.response.PinStatusResponse;
 import com.service.domain.auth.dto.response.SignupResponse;
 import com.service.domain.auth.dto.response.TokenResponse;
 import com.service.domain.auth.entity.PinAuth;
@@ -246,6 +247,13 @@ public class AuthService {
             .build();
 
     pinAuthRepository.save(pinAuth);
+  }
+
+  public PinStatusResponse getPinStatus(Long userId) {
+    return pinAuthRepository
+        .findByUserId(userId)
+        .map(pinAuth -> PinStatusResponse.of(pinAuth.getLockedYn(), pinAuth.getFailCount()))
+        .orElse(PinStatusResponse.of(false, 0));
   }
 
   @Transactional(noRollbackFor = BusinessException.class)

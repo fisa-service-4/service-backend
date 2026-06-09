@@ -1,5 +1,6 @@
 package com.service.domain.transfer.service;
 
+import com.service.domain.auth.repository.PinAuthRepository;
 import com.service.domain.mydata.repository.LinkedFinancialAccountRepository;
 import com.service.domain.transfer.dto.request.TransferRequest;
 import com.service.domain.transfer.dto.response.TransferResponse;
@@ -18,10 +19,20 @@ public class TransferServiceImpl implements TransferService {
 
   private final TransactionServerClient transactionServerClient;
   private final LinkedFinancialAccountRepository linkedFinancialAccountRepository;
+  private final PinAuthRepository pinAuthRepository;
 
   @Override
   public TransferResponse requestTransfer(
       Long userId, String idempotencyKey, TransferRequest request) {
+
+    pinAuthRepository
+        .findByUserId(userId)
+        .ifPresent(
+            pinAuth -> {
+              if (Boolean.TRUE.equals(pinAuth.getLockedYn())) {
+                throw new BusinessException(ErrorCode.AUTH_009);
+              }
+            });
 
     linkedFinancialAccountRepository
         .findByExternalAccountIdAndUser_UserId(request.getFromAccountId(), userId)

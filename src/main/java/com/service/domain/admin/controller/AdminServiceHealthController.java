@@ -32,7 +32,6 @@ public class AdminServiceHealthController {
   })
   @GetMapping("/health")
   public ResponseEntity<ApiResponse<List<ServiceHealthResponse>>> getServicesHealth() {
-    return ResponseEntity.ok(
-        ApiResponse.success(adminServiceHealthService.getAllServicesHealth()));
+    return ResponseEntity.ok(ApiResponse.success(adminServiceHealthService.getAllServicesHealth()));
   }
 }

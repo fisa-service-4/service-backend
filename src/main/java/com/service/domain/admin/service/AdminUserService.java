@@ -68,7 +68,8 @@ public class AdminUserService {
     Specification<User> spec = buildSpec(keyword, status, jobType, loginStatus, onlineUserIds);
     return userRepository
         .findAll(spec, effectivePageable)
-        .map(user -> AdminUserListResponse.of(user, null, onlineUserIds.contains(user.getUserId())));
+        .map(
+            user -> AdminUserListResponse.of(user, null, onlineUserIds.contains(user.getUserId())));
   }
 
   private Pageable translateSort(Pageable pageable) {

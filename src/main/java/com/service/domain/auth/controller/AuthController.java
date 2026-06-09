@@ -10,6 +10,7 @@ import com.service.domain.auth.dto.request.PinVerifyRequest;
 import com.service.domain.auth.dto.request.ReissueRequest;
 import com.service.domain.auth.dto.request.SignupRequest;
 import com.service.domain.auth.dto.response.LoginResponse;
+import com.service.domain.auth.dto.response.PinStatusResponse;
 import com.service.domain.auth.dto.response.SignupResponse;
 import com.service.domain.auth.dto.response.TokenResponse;
 import com.service.domain.auth.service.AuthService;
@@ -22,6 +23,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -188,5 +190,15 @@ public class AuthController {
     Long userId = (Long) authentication.getPrincipal();
     authService.changePin(userId, request);
     return ResponseEntity.ok(com.service.global.response.ApiResponse.success(null));
+  }
+
+  @Operation(summary = "PIN 상태 조회")
+  @ApiResponses({@ApiResponse(responseCode = "200", description = "PIN 상태 조회 성공")})
+  @GetMapping("/pin/status")
+  public ResponseEntity<com.service.global.response.ApiResponse<PinStatusResponse>> getPinStatus(
+      Authentication authentication) {
+    Long userId = (Long) authentication.getPrincipal();
+    return ResponseEntity.ok(
+        com.service.global.response.ApiResponse.success(authService.getPinStatus(userId)));
   }
 }
