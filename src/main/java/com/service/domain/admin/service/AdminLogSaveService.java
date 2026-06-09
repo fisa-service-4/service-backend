@@ -27,6 +27,7 @@ public class AdminLogSaveService {
   private final ApiCallLogRepository apiCallLogRepository;
 
   @Async("logTaskExecutor")
+  @Transactional("logTransactionManager")
   public void saveSystemErrorLog(
       String traceId,
       String errorLevel,
