@@ -53,7 +53,6 @@ public class AdminLogSaveService {
     }
   }
 
-  @Async("logTaskExecutor")
   @Transactional("logTransactionManager")
   public void resolveLoginFailureLogs(Long userId) {
     try {

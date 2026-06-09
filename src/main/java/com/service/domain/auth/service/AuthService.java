@@ -174,15 +174,23 @@ public class AuthService {
     Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
     if (userOpt.isEmpty()) {
       adminLogSaveService.saveSystemErrorLog(
-          null, "WARN", ErrorCode.AUTH_003.getCode(),
-          ErrorCode.AUTH_003.getMessage(), "/api/v1/auth/login", null);
+          null,
+          "WARN",
+          ErrorCode.AUTH_003.getCode(),
+          ErrorCode.AUTH_003.getMessage(),
+          "/api/v1/auth/login",
+          null);
       throw new BusinessException(ErrorCode.AUTH_003);
     }
     User user = userOpt.get();
     if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
       adminLogSaveService.saveSystemErrorLog(
-          null, "WARN", ErrorCode.AUTH_003.getCode(),
-          ErrorCode.AUTH_003.getMessage(), "/api/v1/auth/login", user.getUserId());
+          null,
+          "WARN",
+          ErrorCode.AUTH_003.getCode(),
+          ErrorCode.AUTH_003.getMessage(),
+          "/api/v1/auth/login",
+          user.getUserId());
       throw new BusinessException(ErrorCode.AUTH_003);
     }
     adminLogSaveService.resolveLoginFailureLogs(user.getUserId());
