@@ -1,6 +1,8 @@
 package com.service.domain.admin.controller;
 
 import com.service.domain.admin.dto.request.ErrorLogResolveRequest;
+import com.service.domain.admin.dto.response.AdminStockOrderLogResponse;
+import com.service.domain.admin.dto.response.AdminTransferLogResponse;
 import com.service.domain.admin.dto.response.AiLogResponse;
 import com.service.domain.admin.dto.response.ApiLogResponse;
 import com.service.domain.admin.dto.response.ErrorLogResponse;
@@ -107,5 +109,37 @@ public class AdminLogController {
     return ResponseEntity.ok(
         com.service.global.response.ApiResponse.success(
             adminLogService.getApiLogs(serviceName, startDate, endDate, pageable)));
+  }
+
+  @Operation(summary = "거래 이력 조회")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "조회 성공"),
+    @ApiResponse(responseCode = "403", description = "ADMIN_001: 관리자 권한 필요")
+  })
+  @GetMapping("/transfers")
+  public ResponseEntity<com.service.global.response.ApiResponse<Page<AdminTransferLogResponse>>>
+      getTransferHistory(
+          @RequestParam(required = false) String startDate,
+          @RequestParam(required = false) String endDate,
+          @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
+    return ResponseEntity.ok(
+        com.service.global.response.ApiResponse.success(
+            adminLogService.getTransferHistory(startDate, endDate, pageable)));
+  }
+
+  @Operation(summary = "주식 거래 이력 조회")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "조회 성공"),
+    @ApiResponse(responseCode = "403", description = "ADMIN_001: 관리자 권한 필요")
+  })
+  @GetMapping("/orders")
+  public ResponseEntity<com.service.global.response.ApiResponse<Page<AdminStockOrderLogResponse>>>
+      getStockOrderHistory(
+          @RequestParam(required = false) String startDate,
+          @RequestParam(required = false) String endDate,
+          @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
+    return ResponseEntity.ok(
+        com.service.global.response.ApiResponse.success(
+            adminLogService.getStockOrderHistory(startDate, endDate, pageable)));
   }
 }
