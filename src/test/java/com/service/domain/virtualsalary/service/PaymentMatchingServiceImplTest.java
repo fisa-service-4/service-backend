@@ -2,6 +2,7 @@ package com.service.domain.virtualsalary.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -194,7 +195,7 @@ class PaymentMatchingServiceImplTest {
   void expireOverdueTbcMatchings_marksExpiredAsFailedAndDelayed() {
     Contract contract = buildContract(new BigDecimal("5000000"), LocalDate.now().minusDays(1));
     PaymentMatching tbc = buildMatching(1L, contract, MatchingStatus.TBC, MatchedBy.SYSTEM);
-    given(matchingRepository.findExpiredTbc(LocalDate.now())).willReturn(List.of(tbc));
+    given(matchingRepository.findExpiredTbc(any(LocalDate.class))).willReturn(List.of(tbc));
 
     matchingService.expireOverdueTbcMatchings();
 

@@ -2,6 +2,7 @@ package com.service.domain.virtualsalary.service;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -213,8 +214,8 @@ class AutoDistributionServiceImplTest {
   @Test
   @DisplayName("잔액이 이체 합계보다 부족하면 우선순위에 따라 이체 금액이 cap된다")
   void distribute_capsTransferAmountWhenBalanceInsufficient() {
-    // actualIncome = 800,000 / emergency = 500,000 / investment = 600,000
-    // balance = 800,000 / priority: EMERGENCY → INVESTMENT
+    // actualIncome = 1,100,000 / emergency = 500,000 / investment = 600,000
+    // balance = 800,000 < totalToTransfer(1,100,000) → capByBalance 실행
     // expected: emergency = 500,000, investment = min(600,000, 800,000-500,000=300,000) = 300,000
     VirtualSalarySetting setting =
         buildSetting(
@@ -224,7 +225,7 @@ class AutoDistributionServiceImplTest {
             new BigDecimal("600000"),
             null,
             List.of(VirtualSalaryCategory.EMERGENCY, VirtualSalaryCategory.INVESTMENT));
-    PaymentMatching matching = buildMatching(buildContract(new BigDecimal("800000")));
+    PaymentMatching matching = buildMatching(buildContract(new BigDecimal("1100000")));
     AccountMapping incomeMapping = buildAccountMapping(1001L, AccountMapping.MappingType.INCOME);
     AccountMapping emergencyMapping =
         buildAccountMapping(2001L, AccountMapping.MappingType.EMERGENCY);
@@ -253,6 +254,47 @@ class AutoDistributionServiceImplTest {
     then(transactionServerClient)
         .should(org.mockito.Mockito.times(2))
         .bankTransfer(any(), anyLong(), any(), any(), any(), any());
+  }
+
+  @Test
+  @DisplayName("비상금 목표 금액이 설정되어 있으면 현재 잔액을 고려하여 이체 금액이 cap된다")
+  void distribute_capsEmergencyAmountWithTargetAmount() {
+    // emergencyTargetAmount = 5,000,000 / currentEmergencyBalance = 4,800,000
+    // remaining = 200,000 → actualEmergency = min(500,000, 200,000) = 200,000
+    VirtualSalarySetting setting =
+        buildSetting(
+            new BigDecimal("3000000"),
+            25,
+            new BigDecimal("500000"),
+            BigDecimal.ZERO,
+            new BigDecimal("5000000"),
+            List.of(VirtualSalaryCategory.EMERGENCY));
+    PaymentMatching matching = buildMatching(buildContract(new BigDecimal("4835000")));
+    AccountMapping incomeMapping = buildAccountMapping(1001L, AccountMapping.MappingType.INCOME);
+    AccountMapping emergencyMapping =
+        buildAccountMapping(2001L, AccountMapping.MappingType.EMERGENCY);
+    BankServerClient.BankAccountDetailData emergencyDetail = buildAccountDetail("2001-111", "088");
+
+    given(settingRepository.findById(1L)).willReturn(Optional.of(setting));
+    given(matchingRepository.findById(1L)).willReturn(Optional.of(matching));
+    given(
+            accountMappingRepository.findByUserIdAndMappingType(
+                1L, AccountMapping.MappingType.INCOME))
+        .willReturn(Optional.of(incomeMapping));
+    given(bankServerClient.getAccountBalance(1001L)).willReturn(new BigDecimal("4835000"));
+    given(
+            accountMappingRepository.findByUserIdAndMappingType(
+                1L, AccountMapping.MappingType.EMERGENCY))
+        .willReturn(Optional.of(emergencyMapping));
+    given(bankServerClient.getAccountBalance(2001L)).willReturn(new BigDecimal("4800000"));
+    given(bankServerClient.getBankAccountDetail(2001L)).willReturn(emergencyDetail);
+
+    distributionService.distribute(1L, 1L);
+
+    then(transactionServerClient)
+        .should()
+        .bankTransfer(
+            any(), eq(1001L), eq("088"), eq("2001-111"), eq(new BigDecimal("200000")), eq("AI"));
   }
 
   // ── helpers ──────────────────────────────────────────────────────────────
