@@ -78,6 +78,29 @@ public class TransactionServerClient {
     }
   }
 
+  public BankTransferApproveResult approveTransfer(Long transferId) {
+    try {
+      TxResponse<BankTransferApproveResult> response =
+          transactionServerRestClient
+              .post()
+              .uri("/baas/v1/bank/transfers/{transferId}/approve", transferId)
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response.getData();
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class BankTransferApproveResult {
+    private Long transferId;
+    private String transferStatus;
+    private java.time.LocalDateTime completedAt;
+  }
+
   public BankTransferResult bankTransfer(
       String idempotencyKey,
       Long fromAccountId,

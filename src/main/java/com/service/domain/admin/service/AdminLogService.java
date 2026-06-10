@@ -1,6 +1,8 @@
 package com.service.domain.admin.service;
 
 import com.service.domain.admin.dto.request.ErrorLogResolveRequest;
+import com.service.domain.admin.dto.response.AdminStockOrderLogResponse;
+import com.service.domain.admin.dto.response.AdminTransferLogResponse;
 import com.service.domain.admin.dto.response.AiLogResponse;
 import com.service.domain.admin.dto.response.ApiLogResponse;
 import com.service.domain.admin.dto.response.DashboardResponse;
@@ -15,7 +17,11 @@ import com.service.domain.admin.repository.ApiCallLogRepository;
 import com.service.domain.admin.repository.LoginHistoryRepository;
 import com.service.domain.admin.repository.SystemErrorLogRepository;
 import com.service.domain.auth.repository.PinAuthRepository;
+import com.service.domain.mydata.entity.IntegratedStockTransactionHistory;
+import com.service.domain.mydata.repository.IntegratedStockTransactionHistoryRepository;
+import com.service.domain.mydata.repository.LinkedFinancialAccountRepository;
 import com.service.domain.user.repository.UserRepository;
+import com.service.global.client.BankAdminClient;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import jakarta.persistence.criteria.Predicate;
@@ -49,6 +55,9 @@ public class AdminLogService {
   private final UserRepository userRepository;
   private final PinAuthRepository pinAuthRepository;
   private final StringRedisTemplate redisTemplate;
+  private final BankAdminClient bankAdminClient;
+  private final IntegratedStockTransactionHistoryRepository stockTransactionHistoryRepository;
+  private final LinkedFinancialAccountRepository linkedFinancialAccountRepository;
 
   @Transactional(readOnly = true)
   public Page<LoginLogResponse> getLoginLogs(
@@ -144,6 +153,50 @@ public class AdminLogService {
         };
 
     return apiCallLogRepository.findAll(spec, pageable).map(ApiLogResponse::of);
+  }
+
+  @Transactional(readOnly = true)
+  public Page<AdminTransferLogResponse> getTransferHistory(
+      String startDate, String endDate, Pageable pageable) {
+    return bankAdminClient
+        .getTransferHistory(startDate, endDate, pageable)
+        .map(
+            transfer -> {
+              String senderName = resolveUserName(transfer.getFromUserId());
+              String receiverName =
+                  transfer.getToUserId() != null ? resolveUserName(transfer.getToUserId()) : null;
+              return AdminTransferLogResponse.of(transfer, senderName, receiverName);
+            });
+  }
+
+  @Transactional(readOnly = true)
+  public Page<AdminStockOrderLogResponse> getStockOrderHistory(
+      String startDate, String endDate, Pageable pageable) {
+    LocalDateTime start = parseStart(startDate);
+    LocalDateTime end = parseEnd(endDate);
+
+    Specification<IntegratedStockTransactionHistory> spec =
+        (root, query, cb) -> {
+          List<Predicate> predicates = new ArrayList<>();
+          if (start != null)
+            predicates.add(cb.greaterThanOrEqualTo(root.get("transactionOccurredAt"), start));
+          if (end != null)
+            predicates.add(cb.lessThanOrEqualTo(root.get("transactionOccurredAt"), end));
+          return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+    return stockTransactionHistoryRepository
+        .findAll(spec, pageable)
+        .map(
+            history -> {
+              String buyerName = resolveUserName(history.getUserId());
+              String accountMasking =
+                  linkedFinancialAccountRepository
+                      .findById(history.getLinkedAccountId())
+                      .map(a -> a.getAccountMasking())
+                      .orElse("-");
+              return AdminStockOrderLogResponse.of(history, buyerName, accountMasking);
+            });
   }
 
   @Transactional(readOnly = true)
