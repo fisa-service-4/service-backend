@@ -25,13 +25,15 @@ public class AiChatSession {
   @Column(name = "title")
   private String title;
 
+  @Builder.Default
   @Enumerated(EnumType.STRING)
   @Column(name = "session_type", nullable = false)
-  private SessionType sessionType;
+  private SessionType sessionType = SessionType.CHAT;
 
+  @Builder.Default
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)
-  private SessionStatus status;
+  private SessionStatus status = SessionStatus.ACTIVE;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
