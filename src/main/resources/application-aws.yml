@@ -1,0 +1,26 @@
+# application-aws.yml
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST}
+      port: ${SPRING_DATA_REDIS_PORT}
+      password: ${SPRING_DATA_REDIS_PASSWORD}
+
+log:
+  datasource:
+    url: ${LOG_DB_URL}
+    username: ${LOG_DB_USERNAME}
+    password: ${LOG_DB_PASSWORD}
+
+mydata:
+  server:
+    url: ${MYDATA_URL}
+
+transaction-server:
+  url: ${TRANSACTION_URL}
