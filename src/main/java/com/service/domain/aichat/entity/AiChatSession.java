@@ -55,4 +55,8 @@ public class AiChatSession {
     this.status = SessionStatus.CLOSED;
     this.updatedAt = LocalDateTime.now();
   }
+
+  public void touch() {
+    this.updatedAt = LocalDateTime.now();
+  }
 }

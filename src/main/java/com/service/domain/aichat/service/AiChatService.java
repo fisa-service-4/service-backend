@@ -17,6 +17,7 @@ import com.service.domain.aichat.repository.AiChatSessionRepository;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -42,8 +43,12 @@ public class AiChatService {
     return SessionCreateResponse.from(sessionRepository.save(session));
   }
 
-  public Page<SessionListResponse> getSessions(Long userId, Pageable pageable) {
-    return sessionRepository.findByUserId(userId, pageable).map(SessionListResponse::from);
+  public List<SessionListResponse> getSessions(Long userId) {
+    return sessionRepository
+        .findByUserIdAndStatusOrderByUpdatedAtDesc(userId, SessionStatus.ACTIVE)
+        .stream()
+        .map(SessionListResponse::from)
+        .toList();
   }
 
   @Transactional
@@ -63,6 +68,7 @@ public class AiChatService {
             .actionType(request.getActionType())
             .build();
 
+    session.touch();
     return MessageCreateResponse.from(messageRepository.save(message));
   }
 

@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -57,11 +58,10 @@ public class AiChatController {
         description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
   })
   @GetMapping("/sessions")
-  public ResponseEntity<ApiResponse<Page<SessionListResponse>>> getSessions(
-      Authentication authentication,
-      @PageableDefault(size = 20) Pageable pageable) {
+  public ResponseEntity<ApiResponse<List<SessionListResponse>>> getSessions(
+      Authentication authentication) {
     Long userId = (Long) authentication.getPrincipal();
-    return ResponseEntity.ok(ApiResponse.success(aiChatService.getSessions(userId, pageable)));
+    return ResponseEntity.ok(ApiResponse.success(aiChatService.getSessions(userId)));
   }
 
   @Operation(summary = "메시지 저장")
