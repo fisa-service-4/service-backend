@@ -1,5 +1,6 @@
 package com.service.domain.aichat.dto.request;
 
+import com.service.domain.aichat.enumtype.MessageRole;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -13,7 +14,7 @@ public class CreateMessageRequest {
   private Long sessionId;
 
   @NotNull
-  private String role;
+  private MessageRole role;
 
   @NotBlank
   private String content;
