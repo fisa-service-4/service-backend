@@ -47,6 +47,8 @@ public enum ErrorCode {
   AI_002(HttpStatus.GATEWAY_TIMEOUT, "AI_002", "AI 서버 응답 시간이 초과되었습니다."),
   AI_003(HttpStatus.INTERNAL_SERVER_ERROR, "AI_003", "AI 실행에 실패했습니다."),
   AI_004(HttpStatus.BAD_REQUEST, "AI_004", "이미 종료(CLOSED) 처리된 세션입니다."),
+  AI_005(HttpStatus.NOT_FOUND, "AI_005", "존재하지 않는 AI 채팅 세션입니다."),
+  AI_006(HttpStatus.FORBIDDEN, "AI_006", "본인의 AI 채팅 세션이 아닙니다."),
 
   // VALID
   VALID_001(HttpStatus.BAD_REQUEST, "VALID_001", "입력값이 올바르지 않습니다."),
