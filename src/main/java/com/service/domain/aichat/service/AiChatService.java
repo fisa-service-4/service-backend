@@ -62,7 +62,7 @@ public class AiChatService {
     AiChatMessage message =
         AiChatMessage.builder()
             .session(session)
-            .role(MessageRole.valueOf(request.getRole()))
+            .role(request.getRole())
             .content(request.getContent())
             .intent(request.getIntent())
             .actionType(request.getActionType())
