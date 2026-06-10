@@ -294,12 +294,15 @@ AI 채팅, 알림, 가상 월급 등의 데이터를 저장합니다. :contentRe
 
 > AI 채팅 세션 정보를 저장합니다.
 
-| 컬럼명          | 데이터 타입    | 설명     | Null 허용 | PK / FK |
-|--------------|-----------|--------|---------|---------|
-| session_id   | BIGINT    | 세션 ID  | NO      | PK      |
-| user_id      | BIGINT    | 사용자 ID | NO      | FK      |
-| session_type | ENUM      | 세션 유형  | NO      | -       |
-| updated_at   | TIMESTAMP | 수정일    | NO      | -       |
+| 컬럼명          | 데이터 타입       | 설명                       | Null 허용 | PK / FK |
+|--------------|-------------|--------------------------|---------|---------|
+| session_id   | BIGINT      | 세션 ID                    | NO      | PK      |
+| user_id      | BIGINT      | 사용자 ID                   | NO      | FK      |
+| title        | VARCHAR(255) | 세션 제목                   | YES     | -       |
+| session_type | VARCHAR(20) | 세션 유형 (CHAT/TRANSFER/STOCK/ANALYSIS) | NO | - |
+| status       | VARCHAR(20) | 세션 상태 (ACTIVE/CLOSED)   | NO      | -       |
+| created_at   | TIMESTAMP   | 생성일                      | NO      | -       |
+| updated_at   | TIMESTAMP   | 수정일                      | NO      | -       |
 
 ---
 
@@ -307,15 +310,16 @@ AI 채팅, 알림, 가상 월급 등의 데이터를 저장합니다. :contentRe
 
 > AI 채팅 메시지를 저장합니다.
 
-| 컬럼명                 | 데이터 타입      | 설명       | Null 허용 | PK / FK |
-|---------------------|-------------|----------|---------|---------|
-| message_id          | BIGINT      | 메시지 ID   | NO      | PK      |
-| session_id          | BIGINT      | 세션 ID    | NO      | FK      |
-| role                | ENUM        | 메시지 역할   | NO      | -       |
-| content             | TEXT        | 메시지 내용   | NO      | -       |
-| action_type         | VARCHAR(50) | 액션 유형    | YES     | -       |
-| action_confirmed_yn | BOOLEAN     | 액션 승인 여부 | NO      | -       |
-| created_at          | TIMESTAMP   | 생성일      | NO      | -       |
+| 컬럼명                 | 데이터 타입      | 설명                     | Null 허용 | PK / FK |
+|---------------------|-------------|------------------------|---------|---------|
+| message_id          | BIGINT      | 메시지 ID                 | NO      | PK      |
+| session_id          | BIGINT      | 세션 ID                  | NO      | FK      |
+| role                | VARCHAR(10) | 메시지 역할 (USER/AI)       | NO      | -       |
+| content             | TEXT        | 메시지 내용                 | NO      | -       |
+| intent              | VARCHAR(50) | AI 응답 의도 (ASSET 등)     | YES     | -       |
+| action_type         | VARCHAR(50) | 액션 유형                  | YES     | -       |
+| action_confirmed_yn | BOOLEAN     | 액션 승인 여부               | NO      | -       |
+| created_at          | TIMESTAMP   | 생성일                    | NO      | -       |
 
 ---
 
