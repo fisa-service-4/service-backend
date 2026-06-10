@@ -10,14 +10,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CreateMessageRequest {
 
-  @NotNull
-  private Long sessionId;
+  @NotNull private Long sessionId;
 
-  @NotNull
-  private MessageRole role;
+  @NotNull private MessageRole role;
 
-  @NotBlank
-  private String content;
+  @NotBlank private String content;
 
   private String intent;
 

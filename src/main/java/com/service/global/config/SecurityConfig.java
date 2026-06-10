@@ -34,6 +34,7 @@ public class SecurityConfig {
     "/api/v1/auth/reissue",
     "/swagger-ui/**",
     "/v3/api-docs/**",
+    "/actuator/**",
   };
 
   private final JwtProvider jwtProvider;
