@@ -93,10 +93,10 @@ public class AiChatService {
     AiChatSession session =
         sessionRepository
             .findById(sessionId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.AI_003));
+            .orElseThrow(() -> new BusinessException(ErrorCode.AI_005));
 
     if (!session.getUserId().equals(userId)) {
-      throw new BusinessException(ErrorCode.AI_003);
+      throw new BusinessException(ErrorCode.AI_006);
     }
 
     return session;
