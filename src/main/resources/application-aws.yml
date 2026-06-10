@@ -18,6 +18,13 @@ log:
     username: ${LOG_DB_USERNAME}
     password: ${LOG_DB_PASSWORD}
 
+analytics:
+  datasource:
+    url: ${ANALYTICS_DB_URL}
+    username: ${ANALYTICS_DB_USERNAME}
+    password: ${ANALYTICS_DB_PASSWORD}
+
+
 mydata:
   server:
     url: ${MYDATA_URL}

@@ -31,7 +31,8 @@ import org.springframework.transaction.PlatformTransactionManager;
       "com.service.domain.holding",
       "com.service.domain.portfolio",
       "com.service.domain.favoritestock",
-      "com.service.domain.virtualsalary"
+      "com.service.domain.virtualsalary",
+      "com.service.domain.aichat"
     },
     entityManagerFactoryRef = "entityManagerFactory",
     transactionManagerRef = "transactionManager")
@@ -75,7 +76,8 @@ public class OperationalJpaConfig {
         "com.service.domain.holding.entity",
         "com.service.domain.portfolio.entity",
         "com.service.domain.favoritestock.entity",
-        "com.service.domain.virtualsalary.entity");
+        "com.service.domain.virtualsalary.entity",
+        "com.service.domain.aichat.entity");
 
     HibernateJpaVendorAdapter adapter = new HibernateJpaVendorAdapter();
     em.setJpaVendorAdapter(adapter);
