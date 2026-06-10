@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.jpa.repository.support.JpaRepositoryFactoryBean;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -25,7 +26,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableJpaRepositories(
     basePackages = "com.service.domain.admin.repository",
     entityManagerFactoryRef = "logEntityManagerFactory",
-    transactionManagerRef = "logTransactionManager")
+    transactionManagerRef = "logTransactionManager",
+    repositoryFactoryBeanClass = JpaRepositoryFactoryBean.class)
 public class LogJpaConfig {
 
   @Value("${log.datasource.url}")
