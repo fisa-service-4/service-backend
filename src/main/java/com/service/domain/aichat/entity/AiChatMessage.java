@@ -35,8 +35,9 @@ public class AiChatMessage {
   @Column(name = "action_type")
   private String actionType;
 
+  @Builder.Default
   @Column(name = "action_confirmed_yn", nullable = false)
-  private Boolean actionConfirmedYn;
+  private Boolean actionConfirmedYn = false;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
