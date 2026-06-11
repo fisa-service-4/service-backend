@@ -5,10 +5,12 @@ import com.service.domain.mydata.repository.AccountMappingRepository;
 import com.service.domain.virtualsalary.dto.request.ManualMatchingRequest;
 import com.service.domain.virtualsalary.dto.response.ManualMatchingResponse;
 import com.service.domain.virtualsalary.dto.response.PaymentMatchingResponse;
+import com.service.domain.virtualsalary.entity.Contract;
 import com.service.domain.virtualsalary.entity.PaymentMatching;
 import com.service.domain.virtualsalary.enumtype.ContractStatus;
 import com.service.domain.virtualsalary.enumtype.MatchedBy;
 import com.service.domain.virtualsalary.enumtype.MatchingStatus;
+import com.service.domain.virtualsalary.repository.ContractRepository;
 import com.service.domain.virtualsalary.repository.PaymentMatchingRepository;
 import com.service.global.client.TransactionServerClient;
 import com.service.global.exception.BusinessException;
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -38,6 +41,7 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
   private static final BigDecimal MATCH_THRESHOLD_RATE = new BigDecimal("0.97");
 
   private final PaymentMatchingRepository paymentMatchingRepository;
+  private final ContractRepository contractRepository;
   private final AutoDistributionService autoDistributionService;
   private final AccountMappingRepository accountMappingRepository;
   private final TransactionServerClient transactionServerClient;
@@ -197,9 +201,10 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
   }
 
   @Override
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public void pollAndMatchForUser(Long userId) {
     Optional<AccountMapping> incomeOpt =
-        accountMappingRepository.findByUserIdAndMappingType(
+        accountMappingRepository.findByUserIdAndMappingTypeFetch(
             userId, AccountMapping.MappingType.INCOME);
     if (incomeOpt.isEmpty()) {
       log.debug("입금 폴링 스킵 - INCOME 계좌 미연결: userId={}", userId);
@@ -263,8 +268,8 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
 
     if (availableDeposits.isEmpty()) return;
 
-    // 3. TBC 매칭 목록 조회
-    List<PaymentMatching> tbcMatchings = paymentMatchingRepository.findTbcByUserId(userId);
+    // 3. TBC 매칭 목록 조회 (contract + settlement fetch join으로 lazy load 방지)
+    List<PaymentMatching> tbcMatchings = paymentMatchingRepository.findTbcByUserIdFetch(userId);
     log.info("입금 폴링 - TBC 매칭 수: {}: userId={}", tbcMatchings.size(), userId);
     if (tbcMatchings.isEmpty()) return;
 
@@ -290,7 +295,7 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
         if (amount.compareTo(lower) >= 0 && amount.compareTo(upper) <= 0) {
           candidates.add(new Candidate(actualIncome.subtract(amount).abs(), matching, tx));
         } else {
-          log.info(
+          log.debug(
               "입금 폴링 - 범위 외 (matchingId={}, actualIncome={}, contractAmount={}, amount={}, range=[{}, {}])",
               matching.getMatchingId(),
               actualIncome,
@@ -314,8 +319,9 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
       Long tId = c.deposit().getTransactionId();
       if (usedMatchingIds.contains(mId) || usedDepositIds.contains(tId)) continue;
 
+      Contract contract = c.matching().getContract();
       c.matching().autoMatch(tId, c.deposit().getAmount());
-      c.matching().getContract().updateContractStatus(ContractStatus.PAID);
+      contract.updateContractStatus(ContractStatus.PAID);
       boolean distributed = false;
       try {
         distributed = autoDistributionService.distribute(userId, mId);
@@ -327,6 +333,8 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
       } else {
         log.warn("자동 분배 스킵됨 (분배 없이 매칭만 저장): matchingId={}, userId={}", mId, userId);
       }
+      contractRepository.save(contract);
+      paymentMatchingRepository.save(c.matching());
       usedMatchingIds.add(mId);
       usedDepositIds.add(tId);
 
@@ -349,6 +357,7 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
           .ifPresent(
               closest -> {
                 matching.linkDeposit(closest.getTransactionId(), closest.getAmount());
+                paymentMatchingRepository.save(matching);
                 log.info(
                     "금액 불일치 - TBC linkDeposit: matchingId={}, depositAmount={}, expectedIncome={}",
                     matching.getMatchingId(),
@@ -359,8 +368,9 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
   }
 
   @Override
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public void retryPendingDistributions() {
-    List<PaymentMatching> pending = paymentMatchingRepository.findMatchedWithoutDistribution();
+    List<PaymentMatching> pending = paymentMatchingRepository.findMatchedWithoutDistributionFetch();
     log.info("분배 재시도 시작: 미완료 건 수={}", pending.size());
 
     for (PaymentMatching matching : pending) {
@@ -375,6 +385,7 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
       }
       if (distributed) {
         matching.markDistributed();
+        paymentMatchingRepository.save(matching);
         log.info("분배 재시도 완료: matchingId={}, userId={}", matchingId, userId);
       }
     }
@@ -383,9 +394,10 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
   }
 
   @Override
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public void retryDistributionForUser(Long userId) {
     List<PaymentMatching> pending =
-        paymentMatchingRepository.findMatchedWithoutDistributionByUserId(userId);
+        paymentMatchingRepository.findMatchedWithoutDistributionByUserIdFetch(userId);
     log.info("분배 재시도(유저) 시작: userId={}, 미완료 건 수={}", userId, pending.size());
 
     for (PaymentMatching matching : pending) {
@@ -399,6 +411,7 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
       }
       if (distributed) {
         matching.markDistributed();
+        paymentMatchingRepository.save(matching);
         log.info("분배 재시도 완료: matchingId={}, userId={}", matchingId, userId);
       }
     }

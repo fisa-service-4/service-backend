@@ -81,9 +81,9 @@ class AutoDistributionServiceImplTest {
     PaymentMatching matching = buildMatching(buildContract(new BigDecimal("4835000")));
 
     given(settingRepository.findById(1L)).willReturn(Optional.of(setting));
-    given(matchingRepository.findById(1L)).willReturn(Optional.of(matching));
+    given(matchingRepository.findByIdWithContractAndSettlement(1L)).willReturn(Optional.of(matching));
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.empty());
 
@@ -109,9 +109,9 @@ class AutoDistributionServiceImplTest {
     AccountMapping incomeMapping = buildAccountMapping(1001L, AccountMapping.MappingType.INCOME);
 
     given(settingRepository.findById(1L)).willReturn(Optional.of(setting));
-    given(matchingRepository.findById(1L)).willReturn(Optional.of(matching));
+    given(matchingRepository.findByIdWithContractAndSettlement(1L)).willReturn(Optional.of(matching));
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(incomeMapping));
     given(bankServerClient.getAccountBalance(1001L)).willThrow(new RuntimeException("서버 오류"));
@@ -151,17 +151,17 @@ class AutoDistributionServiceImplTest {
     TransactionServerClient.BankTransferResult transferResult = buildTransferResult(999L);
 
     given(settingRepository.findById(1L)).willReturn(Optional.of(setting));
-    given(matchingRepository.findById(1L)).willReturn(Optional.of(matching));
+    given(matchingRepository.findByIdWithContractAndSettlement(1L)).willReturn(Optional.of(matching));
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(incomeMapping));
     given(bankServerClient.getAccountBalance(1001L)).willReturn(new BigDecimal("4835000"));
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.EMERGENCY))
         .willReturn(Optional.of(emergencyMapping));
-    given(accountMappingRepository.findByUserIdAndMappingType(1L, AccountMapping.MappingType.STOCK))
+    given(accountMappingRepository.findByUserIdAndMappingTypeFetch(1L, AccountMapping.MappingType.STOCK))
         .willReturn(Optional.of(investmentMapping));
     given(bankServerClient.getBankAccountDetail(2001L)).willReturn(emergencyDetail);
     given(userRepository.findById(1L)).willReturn(Optional.of(user));
@@ -201,17 +201,17 @@ class AutoDistributionServiceImplTest {
     TransactionServerClient.BankTransferResult transferResult = buildTransferResult(999L);
 
     given(settingRepository.findById(1L)).willReturn(Optional.of(setting));
-    given(matchingRepository.findById(1L)).willReturn(Optional.of(matching));
+    given(matchingRepository.findByIdWithContractAndSettlement(1L)).willReturn(Optional.of(matching));
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(incomeMapping));
     given(bankServerClient.getAccountBalance(1001L)).willReturn(new BigDecimal("4835000"));
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.EMERGENCY))
         .willReturn(Optional.of(emergencyMapping));
-    given(accountMappingRepository.findByUserIdAndMappingType(1L, AccountMapping.MappingType.STOCK))
+    given(accountMappingRepository.findByUserIdAndMappingTypeFetch(1L, AccountMapping.MappingType.STOCK))
         .willReturn(Optional.of(investmentMapping));
     given(bankServerClient.getBankAccountDetail(2001L)).willReturn(emergencyDetail);
     given(userRepository.findById(1L)).willReturn(Optional.of(user));
@@ -252,17 +252,17 @@ class AutoDistributionServiceImplTest {
     TransactionServerClient.BankTransferResult transferResult = buildTransferResult(999L);
 
     given(settingRepository.findById(1L)).willReturn(Optional.of(setting));
-    given(matchingRepository.findById(1L)).willReturn(Optional.of(matching));
+    given(matchingRepository.findByIdWithContractAndSettlement(1L)).willReturn(Optional.of(matching));
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(incomeMapping));
     given(bankServerClient.getAccountBalance(1001L)).willReturn(new BigDecimal("800000"));
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.EMERGENCY))
         .willReturn(Optional.of(emergencyMapping));
-    given(accountMappingRepository.findByUserIdAndMappingType(1L, AccountMapping.MappingType.STOCK))
+    given(accountMappingRepository.findByUserIdAndMappingTypeFetch(1L, AccountMapping.MappingType.STOCK))
         .willReturn(Optional.of(investmentMapping));
     given(bankServerClient.getBankAccountDetail(2001L)).willReturn(emergencyDetail);
     given(userRepository.findById(1L)).willReturn(Optional.of(user));
@@ -298,14 +298,14 @@ class AutoDistributionServiceImplTest {
     BankServerClient.BankAccountDetailData emergencyDetail = buildAccountDetail("2001-111", "088");
 
     given(settingRepository.findById(1L)).willReturn(Optional.of(setting));
-    given(matchingRepository.findById(1L)).willReturn(Optional.of(matching));
+    given(matchingRepository.findByIdWithContractAndSettlement(1L)).willReturn(Optional.of(matching));
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(incomeMapping));
     given(bankServerClient.getAccountBalance(1001L)).willReturn(new BigDecimal("4835000"));
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.EMERGENCY))
         .willReturn(Optional.of(emergencyMapping));
     given(bankServerClient.getAccountBalance(2001L)).willReturn(new BigDecimal("4800000"));

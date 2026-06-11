@@ -54,4 +54,37 @@ public interface PaymentMatchingRepository extends JpaRepository<PaymentMatching
           + " AND pm.distributedYn = false"
           + " AND pm.contract.userId = :userId")
   List<PaymentMatching> findMatchedWithoutDistributionByUserId(@Param("userId") Long userId);
+
+  // ── fetch join variants (트랜잭션 밖 lazy loading 방지) ──────────────────
+
+  @Query(
+      "SELECT pm FROM PaymentMatching pm"
+          + " JOIN FETCH pm.contract c JOIN FETCH c.settlement"
+          + " WHERE pm.matchingId = :matchingId")
+  Optional<PaymentMatching> findByIdWithContractAndSettlement(
+      @Param("matchingId") Long matchingId);
+
+  @Query(
+      "SELECT pm FROM PaymentMatching pm"
+          + " JOIN FETCH pm.contract c JOIN FETCH c.settlement"
+          + " WHERE pm.matchingStatus = 'TBC' AND c.userId = :userId"
+          + " ORDER BY c.expectedPaymentDate ASC")
+  List<PaymentMatching> findTbcByUserIdFetch(@Param("userId") Long userId);
+
+  @Query(
+      "SELECT pm FROM PaymentMatching pm"
+          + " JOIN FETCH pm.contract c"
+          + " WHERE pm.matchingStatus = 'MATCHED'"
+          + " AND pm.matchedBy = 'SYSTEM'"
+          + " AND pm.distributedYn = false")
+  List<PaymentMatching> findMatchedWithoutDistributionFetch();
+
+  @Query(
+      "SELECT pm FROM PaymentMatching pm"
+          + " JOIN FETCH pm.contract c"
+          + " WHERE pm.matchingStatus = 'MATCHED'"
+          + " AND pm.matchedBy = 'SYSTEM'"
+          + " AND pm.distributedYn = false"
+          + " AND c.userId = :userId")
+  List<PaymentMatching> findMatchedWithoutDistributionByUserIdFetch(@Param("userId") Long userId);
 }

@@ -14,12 +14,12 @@ import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
 
 @Slf4j
 @Service
@@ -37,7 +37,7 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
   private final TransactionServerClient transactionServerClient;
 
   @Override
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public boolean distribute(Long userId, Long matchingId) {
     VirtualSalarySetting setting = virtualSalarySettingRepository.findById(userId).orElse(null);
     if (setting == null) {
@@ -47,7 +47,7 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
 
     PaymentMatching matching =
         paymentMatchingRepository
-            .findById(matchingId)
+            .findByIdWithContractAndSettlement(matchingId)
             .orElseThrow(() -> new BusinessException(ErrorCode.MATCHING_001));
 
     Long incomeAccountId = resolveAccountId(userId, AccountMapping.MappingType.INCOME);
@@ -78,7 +78,7 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
           setting.getInvestmentAmount());
     }
 
-    executeTransfers(userId, incomeAccountId, result, setting);
+    executeTransfers(userId, matchingId, incomeAccountId, result, setting);
 
     log.info(
         "자동 분배 완료: userId={}, matchingId={}, emergency={}, investment={}, living={}",
@@ -91,7 +91,11 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
   }
 
   private void executeTransfers(
-      Long userId, Long incomeAccountId, DistributionResult result, VirtualSalarySetting setting) {
+      Long userId,
+      Long matchingId,
+      Long incomeAccountId,
+      DistributionResult result,
+      VirtualSalarySetting setting) {
 
     if (result.emergencyAmount().compareTo(ZERO) > 0) {
       Long emergencyAccountId = resolveAccountId(userId, AccountMapping.MappingType.EMERGENCY);
@@ -112,7 +116,7 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
                 bankServerClient.getBankAccountDetail(emergencyAccountId);
             TransactionServerClient.BankTransferResult emergencyTransfer =
                 transactionServerClient.bankTransfer(
-                    UUID.randomUUID().toString(),
+                    matchingId + "_EMERGENCY",
                     incomeAccountId,
                     emergencyDetail.getBankCode(),
                     emergencyDetail.getAccountNumber(),
@@ -142,7 +146,7 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
               bankServerClient.getStockAccountDetail(firebaseUid, investmentAccountId);
           TransactionServerClient.BankTransferResult investmentTransfer =
               transactionServerClient.bankTransfer(
-                  UUID.randomUUID().toString(),
+                  matchingId + "_INVESTMENT",
                   incomeAccountId,
                   investmentDetail.getBankCode(),
                   investmentDetail.getAccountNumber(),
@@ -224,7 +228,7 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
 
   private Long resolveAccountId(Long userId, AccountMapping.MappingType type) {
     return accountMappingRepository
-        .findByUserIdAndMappingType(userId, type)
+        .findByUserIdAndMappingTypeFetch(userId, type)
         .map(m -> m.getLinkedFinancialAccount().getExternalAccountId())
         .orElse(null);
   }

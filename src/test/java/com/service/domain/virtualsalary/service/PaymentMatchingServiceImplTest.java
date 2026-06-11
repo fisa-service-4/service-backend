@@ -21,6 +21,7 @@ import com.service.domain.virtualsalary.enumtype.ContractStatus;
 import com.service.domain.virtualsalary.enumtype.MatchedBy;
 import com.service.domain.virtualsalary.enumtype.MatchingStatus;
 import com.service.domain.virtualsalary.enumtype.TaxType;
+import com.service.domain.virtualsalary.repository.ContractRepository;
 import com.service.domain.virtualsalary.repository.PaymentMatchingRepository;
 import com.service.global.client.TransactionServerClient;
 import com.service.global.exception.BusinessException;
@@ -45,6 +46,8 @@ class PaymentMatchingServiceImplTest {
   @InjectMocks private PaymentMatchingServiceImpl matchingService;
 
   @Mock private PaymentMatchingRepository matchingRepository;
+
+  @Mock private ContractRepository contractRepository;
 
   @Mock private AutoDistributionService autoDistributionService;
 
@@ -221,7 +224,7 @@ class PaymentMatchingServiceImplTest {
   @DisplayName("pollAndMatchForUser - INCOME 계좌 미연결이면 거래내역 조회를 하지 않는다")
   void pollAndMatchForUser_skipsWhenNoIncomeMapping() {
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.empty());
 
@@ -236,7 +239,7 @@ class PaymentMatchingServiceImplTest {
   @DisplayName("pollAndMatchForUser - 거래내역 조회 예외 발생 시 매칭 처리를 스킵한다")
   void pollAndMatchForUser_skipsWhenTransactionClientThrows() {
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(buildAccountMapping(1001L)));
     given(
@@ -246,14 +249,14 @@ class PaymentMatchingServiceImplTest {
 
     matchingService.pollAndMatchForUser(1L);
 
-    then(matchingRepository).should(never()).findTbcByUserId(1L);
+    then(matchingRepository).should(never()).findTbcByUserIdFetch(1L);
   }
 
   @Test
   @DisplayName("pollAndMatchForUser - 거래내역이 없으면 매칭 처리를 하지 않는다")
   void pollAndMatchForUser_skipsWhenNoTransactions() {
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(buildAccountMapping(1001L)));
     given(
@@ -263,7 +266,7 @@ class PaymentMatchingServiceImplTest {
 
     matchingService.pollAndMatchForUser(1L);
 
-    then(matchingRepository).should(never()).findTbcByUserId(anyLong());
+    then(matchingRepository).should(never()).findTbcByUserIdFetch(anyLong());
   }
 
   @Test
@@ -275,7 +278,7 @@ class PaymentMatchingServiceImplTest {
     PaymentMatching tbc = buildMatching(10L, contract, MatchingStatus.TBC, MatchedBy.SYSTEM);
 
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(buildAccountMapping(1001L)));
     given(
@@ -284,7 +287,7 @@ class PaymentMatchingServiceImplTest {
         .willReturn(
             buildPageData(
                 List.of(buildTxItem(9001L, "DEPOSIT", "SUCCESS", new BigDecimal("4835000")))));
-    given(matchingRepository.findTbcByUserId(1L)).willReturn(List.of(tbc));
+    given(matchingRepository.findTbcByUserIdFetch(1L)).willReturn(List.of(tbc));
     given(autoDistributionService.distribute(1L, 10L)).willReturn(true);
 
     matchingService.pollAndMatchForUser(1L);
@@ -304,7 +307,7 @@ class PaymentMatchingServiceImplTest {
     PaymentMatching tbc = buildMatching(10L, contract, MatchingStatus.TBC, MatchedBy.SYSTEM);
 
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(buildAccountMapping(1001L)));
     given(
@@ -313,7 +316,7 @@ class PaymentMatchingServiceImplTest {
         .willReturn(
             buildPageData(
                 List.of(buildTxItem(9001L, "DEPOSIT", "SUCCESS", new BigDecimal("1000")))));
-    given(matchingRepository.findTbcByUserId(1L)).willReturn(List.of(tbc));
+    given(matchingRepository.findTbcByUserIdFetch(1L)).willReturn(List.of(tbc));
 
     matchingService.pollAndMatchForUser(1L);
 
@@ -326,7 +329,7 @@ class PaymentMatchingServiceImplTest {
   @DisplayName("pollAndMatchForUser - 이미 MATCHED된 txId는 가용 목록에서 제외하고 스킵한다")
   void pollAndMatchForUser_excludesAlreadyMatchedTxIds() {
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(buildAccountMapping(1001L)));
     given(
@@ -340,7 +343,7 @@ class PaymentMatchingServiceImplTest {
 
     matchingService.pollAndMatchForUser(1L);
 
-    then(matchingRepository).should(never()).findTbcByUserId(anyLong());
+    then(matchingRepository).should(never()).findTbcByUserIdFetch(anyLong());
     then(autoDistributionService).should(never()).distribute(anyLong(), anyLong());
   }
 
@@ -356,7 +359,7 @@ class PaymentMatchingServiceImplTest {
     PaymentMatching tbc2 = buildMatching(11L, contract2, MatchingStatus.TBC, MatchedBy.SYSTEM);
 
     given(
-            accountMappingRepository.findByUserIdAndMappingType(
+            accountMappingRepository.findByUserIdAndMappingTypeFetch(
                 1L, AccountMapping.MappingType.INCOME))
         .willReturn(Optional.of(buildAccountMapping(1001L)));
     given(
@@ -367,7 +370,7 @@ class PaymentMatchingServiceImplTest {
                 List.of(
                     buildTxItem(9001L, "DEPOSIT", "SUCCESS", new BigDecimal("4835000")),
                     buildTxItem(9002L, "TRANSFER_IN", "SUCCESS", new BigDecimal("3000000")))));
-    given(matchingRepository.findTbcByUserId(1L)).willReturn(List.of(tbc1, tbc2));
+    given(matchingRepository.findTbcByUserIdFetch(1L)).willReturn(List.of(tbc1, tbc2));
     given(autoDistributionService.distribute(1L, 10L)).willReturn(true);
     given(autoDistributionService.distribute(1L, 11L)).willReturn(true);
 
@@ -386,7 +389,7 @@ class PaymentMatchingServiceImplTest {
   @Test
   @DisplayName("retryPendingDistributions - 미완료 분배가 없으면 distribute를 호출하지 않는다")
   void retryPendingDistributions_skipsWhenNoPending() {
-    given(matchingRepository.findMatchedWithoutDistribution()).willReturn(Collections.emptyList());
+    given(matchingRepository.findMatchedWithoutDistributionFetch()).willReturn(Collections.emptyList());
 
     matchingService.retryPendingDistributions();
 
@@ -399,7 +402,7 @@ class PaymentMatchingServiceImplTest {
     Contract contract = buildContract(1L, new BigDecimal("5000000"), LocalDate.now().plusDays(5));
     PaymentMatching matching =
         buildMatching(1L, contract, MatchingStatus.MATCHED, MatchedBy.SYSTEM);
-    given(matchingRepository.findMatchedWithoutDistribution()).willReturn(List.of(matching));
+    given(matchingRepository.findMatchedWithoutDistributionFetch()).willReturn(List.of(matching));
     given(autoDistributionService.distribute(1L, 1L)).willReturn(true);
 
     matchingService.retryPendingDistributions();
@@ -413,7 +416,7 @@ class PaymentMatchingServiceImplTest {
     Contract contract = buildContract(1L, new BigDecimal("5000000"), LocalDate.now().plusDays(5));
     PaymentMatching matching =
         buildMatching(1L, contract, MatchingStatus.MATCHED, MatchedBy.SYSTEM);
-    given(matchingRepository.findMatchedWithoutDistribution()).willReturn(List.of(matching));
+    given(matchingRepository.findMatchedWithoutDistributionFetch()).willReturn(List.of(matching));
     given(autoDistributionService.distribute(1L, 1L)).willReturn(false);
 
     matchingService.retryPendingDistributions();
