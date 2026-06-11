@@ -53,19 +53,20 @@ public class AiChatService {
   }
 
   public MessageCreateResponse runChatAgent(
-      Long userId, Long sessionId, String message, String authorization) {
+      Long userId, Long sessionId, String message, Boolean isPin, String authorization) {
     AiChatSession session = findSessionByUser(sessionId, userId);
     if (session.getStatus() == SessionStatus.CLOSED) {
       throw new BusinessException(ErrorCode.AI_004);
     }
     AiServerClient.ChatRunResult result =
-        aiServerClient.runChatAgent(sessionId, message, authorization);
+        aiServerClient.runChatAgent(sessionId, message, isPin, authorization);
     return MessageCreateResponse.builder()
         .messageId(result.getMessageId())
         .role(result.getRole())
         .intent(result.getIntent())
         .content(result.getContent())
         .actionRequired(result.getActionRequired())
+        .requirePin(result.getRequirePin())
         .build();
   }
 

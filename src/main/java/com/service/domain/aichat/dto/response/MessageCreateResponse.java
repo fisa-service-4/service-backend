@@ -13,6 +13,7 @@ public class MessageCreateResponse {
   private String intent;
   private String content;
   private Boolean actionRequired;
+  private Boolean requirePin;
 
   public static MessageCreateResponse from(AiChatMessage message) {
     return MessageCreateResponse.builder()

@@ -107,15 +107,15 @@ public class AiServerClient {
     private String summary;
   }
 
-  public ChatRunResult runChatAgent(Long sessionId, String message, String authorization) {
-    String url = aiServerUrl + "/api/v1/ai/chat/run";
+  public ChatRunResult runChatAgent(Long sessionId, String message, Boolean isPin, String authorization) {
+    String url = aiServerUrl + "/chat/run";
     Long userId = getCurrentUserId();
     long startTime = System.currentTimeMillis();
     boolean success = false;
 
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", authorization);
-    ChatRunRequest requestBody = new ChatRunRequest(sessionId, message);
+    ChatRunRequest requestBody = new ChatRunRequest(sessionId, message, isPin != null && isPin);
 
     try {
       ResponseEntity<ChatRunResult> response =
@@ -158,6 +158,7 @@ public class AiServerClient {
   public static class ChatRunRequest {
     private Long sessionId;
     private String message;
+    private Boolean isPin;
   }
 
   @Getter
@@ -170,5 +171,6 @@ public class AiServerClient {
     private String intent;
     private String content;
     private Boolean actionRequired;
+    private Boolean requirePin;
   }
 }
