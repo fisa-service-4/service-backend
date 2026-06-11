@@ -389,7 +389,8 @@ class PaymentMatchingServiceImplTest {
   @Test
   @DisplayName("retryPendingDistributions - 미완료 분배가 없으면 distribute를 호출하지 않는다")
   void retryPendingDistributions_skipsWhenNoPending() {
-    given(matchingRepository.findMatchedWithoutDistributionFetch()).willReturn(Collections.emptyList());
+    given(matchingRepository.findMatchedWithoutDistributionFetch())
+        .willReturn(Collections.emptyList());
 
     matchingService.retryPendingDistributions();
 

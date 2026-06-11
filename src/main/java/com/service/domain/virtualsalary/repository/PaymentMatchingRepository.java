@@ -61,8 +61,7 @@ public interface PaymentMatchingRepository extends JpaRepository<PaymentMatching
       "SELECT pm FROM PaymentMatching pm"
           + " JOIN FETCH pm.contract c JOIN FETCH c.settlement"
           + " WHERE pm.matchingId = :matchingId")
-  Optional<PaymentMatching> findByIdWithContractAndSettlement(
-      @Param("matchingId") Long matchingId);
+  Optional<PaymentMatching> findByIdWithContractAndSettlement(@Param("matchingId") Long matchingId);
 
   @Query(
       "SELECT pm FROM PaymentMatching pm"

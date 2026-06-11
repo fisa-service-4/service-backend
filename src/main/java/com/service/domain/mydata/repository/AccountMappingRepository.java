@@ -20,6 +20,5 @@ public interface AccountMappingRepository extends JpaRepository<AccountMapping, 
       "SELECT am FROM AccountMapping am JOIN FETCH am.linkedFinancialAccount"
           + " WHERE am.userId = :userId AND am.mappingType = :mappingType")
   Optional<AccountMapping> findByUserIdAndMappingTypeFetch(
-      @Param("userId") Long userId,
-      @Param("mappingType") AccountMapping.MappingType mappingType);
+      @Param("userId") Long userId, @Param("mappingType") AccountMapping.MappingType mappingType);
 }
