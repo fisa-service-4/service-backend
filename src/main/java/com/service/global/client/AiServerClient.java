@@ -6,6 +6,7 @@ import com.service.domain.virtualsalary.dto.request.AiRecommendationRequest;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -29,6 +31,7 @@ public class AiServerClient {
 
   private static final String AI_MODEL_NAME = "Qwen3-8B";
   private static final String REQUEST_TYPE = "VIRTUAL_SALARY";
+  private static final String REQUEST_TYPE_CHAT = "CHAT";
 
   private final RestTemplate restTemplate;
   private final AdminLogSaveService adminLogSaveService;
@@ -102,5 +105,70 @@ public class AiServerClient {
     private BigDecimal recommendedEmergencyAmount;
     private BigDecimal recommendedInvestmentAmount;
     private String summary;
+  }
+
+  public ChatRunResult runChatAgent(Long sessionId, String message, String authorization) {
+    String url = aiServerUrl + "/api/v1/ai/chat/run";
+    Long userId = getCurrentUserId();
+    long startTime = System.currentTimeMillis();
+    boolean success = false;
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Authorization", authorization);
+    ChatRunRequest requestBody = new ChatRunRequest(sessionId, message);
+
+    try {
+      ResponseEntity<ChatRunResult> response =
+          restTemplate.exchange(
+              url, HttpMethod.POST, new HttpEntity<>(requestBody, headers), ChatRunResult.class);
+      ChatRunResult result = response.getBody();
+      if (result == null) {
+        throw new BusinessException(ErrorCode.AI_001);
+      }
+      success = true;
+      return result;
+    } catch (ResourceAccessException e) {
+      log.error("AI 서버 연결 실패: {}", e.getMessage());
+      throw new BusinessException(ErrorCode.AI_002);
+    } catch (RestClientResponseException e) {
+      log.error(
+          "AI 서버 에러 응답 (status={}, body={})",
+          e.getStatusCode(),
+          e.getResponseBodyAsString());
+      throw new BusinessException(ErrorCode.AI_001);
+    } catch (BusinessException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("AI 채팅 응답 처리 실패: {}", e.getMessage(), e);
+      throw new BusinessException(ErrorCode.AI_001);
+    } finally {
+      long durationMs = System.currentTimeMillis() - startTime;
+      try {
+        adminLogSaveService.saveAiUsageLog(
+            userId, AI_MODEL_NAME, durationMs, REQUEST_TYPE_CHAT, success);
+      } catch (Exception e) {
+        log.error("AI 사용 로그 비동기 저장 요청 실패", e);
+      }
+    }
+  }
+
+  @Getter
+  @AllArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class ChatRunRequest {
+    private Long sessionId;
+    private String message;
+  }
+
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class ChatRunResult {
+    private Long messageId;
+    private String role;
+    private String intent;
+    private String content;
+    private Boolean actionRequired;
   }
 }
