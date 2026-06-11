@@ -61,3 +61,7 @@ ai:
 # onpremise transaction server
 transaction-server:
   url: http://transaction-server:8083
+
+bank:
+  server:
+    url: http://127.0.0.1:8081
