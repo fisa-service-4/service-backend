@@ -18,6 +18,7 @@ import com.service.domain.virtualsalary.enumtype.MatchedBy;
 import com.service.domain.virtualsalary.enumtype.MatchingStatus;
 import com.service.domain.virtualsalary.enumtype.TaxType;
 import com.service.domain.virtualsalary.repository.ContractRepository;
+import com.service.domain.virtualsalary.repository.PaymentMatchingRepository;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import java.math.BigDecimal;
@@ -39,6 +40,8 @@ class ContractServiceImplTest {
   @InjectMocks private ContractServiceImpl contractService;
 
   @Mock private ContractRepository contractRepository;
+
+  @Mock private PaymentMatchingRepository paymentMatchingRepository;
 
   @Test
   @DisplayName("계약 생성 시 3.3% 세금 공제 금액과 실수령액이 올바르게 계산된다")

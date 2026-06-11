@@ -10,6 +10,8 @@ import static org.mockito.Mockito.never;
 import com.service.domain.mydata.entity.AccountMapping;
 import com.service.domain.mydata.entity.LinkedFinancialAccount;
 import com.service.domain.mydata.repository.AccountMappingRepository;
+import com.service.domain.user.entity.User;
+import com.service.domain.user.repository.UserRepository;
 import com.service.domain.virtualsalary.entity.Contract;
 import com.service.domain.virtualsalary.entity.ContractSettlement;
 import com.service.domain.virtualsalary.entity.PaymentMatching;
@@ -45,6 +47,8 @@ class AutoDistributionServiceImplTest {
   @Mock private VirtualSalarySettingRepository settingRepository;
 
   @Mock private AccountMappingRepository accountMappingRepository;
+
+  @Mock private UserRepository userRepository;
 
   @Mock private BankServerClient bankServerClient;
 
@@ -142,7 +146,9 @@ class AutoDistributionServiceImplTest {
         buildAccountMapping(2001L, AccountMapping.MappingType.EMERGENCY);
     AccountMapping investmentMapping = buildAccountMapping(3001L, AccountMapping.MappingType.STOCK);
     BankServerClient.BankAccountDetailData emergencyDetail = buildAccountDetail("2001-111", "088");
-    BankServerClient.BankAccountDetailData investmentDetail = buildAccountDetail("3001-222", "088");
+    BankServerClient.StockAccountItem investmentDetail = buildStockAccountItem("3001-222", "088");
+    User user = User.builder().firebaseUid("firebase-uid-1").build();
+    TransactionServerClient.BankTransferResult transferResult = buildTransferResult(999L);
 
     given(settingRepository.findById(1L)).willReturn(Optional.of(setting));
     given(matchingRepository.findById(1L)).willReturn(Optional.of(matching));
@@ -158,7 +164,11 @@ class AutoDistributionServiceImplTest {
     given(accountMappingRepository.findByUserIdAndMappingType(1L, AccountMapping.MappingType.STOCK))
         .willReturn(Optional.of(investmentMapping));
     given(bankServerClient.getBankAccountDetail(2001L)).willReturn(emergencyDetail);
-    given(bankServerClient.getBankAccountDetail(3001L)).willReturn(investmentDetail);
+    given(userRepository.findById(1L)).willReturn(Optional.of(user));
+    given(bankServerClient.getStockAccountDetail("firebase-uid-1", 3001L))
+        .willReturn(investmentDetail);
+    given(transactionServerClient.bankTransfer(any(), anyLong(), any(), any(), any(), any()))
+        .willReturn(transferResult);
 
     distributionService.distribute(1L, 1L);
 
@@ -186,7 +196,9 @@ class AutoDistributionServiceImplTest {
         buildAccountMapping(2001L, AccountMapping.MappingType.EMERGENCY);
     AccountMapping investmentMapping = buildAccountMapping(3001L, AccountMapping.MappingType.STOCK);
     BankServerClient.BankAccountDetailData emergencyDetail = buildAccountDetail("2001-111", "088");
-    BankServerClient.BankAccountDetailData investmentDetail = buildAccountDetail("3001-222", "088");
+    BankServerClient.StockAccountItem investmentDetail = buildStockAccountItem("3001-222", "088");
+    User user = User.builder().firebaseUid("firebase-uid-1").build();
+    TransactionServerClient.BankTransferResult transferResult = buildTransferResult(999L);
 
     given(settingRepository.findById(1L)).willReturn(Optional.of(setting));
     given(matchingRepository.findById(1L)).willReturn(Optional.of(matching));
@@ -202,7 +214,11 @@ class AutoDistributionServiceImplTest {
     given(accountMappingRepository.findByUserIdAndMappingType(1L, AccountMapping.MappingType.STOCK))
         .willReturn(Optional.of(investmentMapping));
     given(bankServerClient.getBankAccountDetail(2001L)).willReturn(emergencyDetail);
-    given(bankServerClient.getBankAccountDetail(3001L)).willReturn(investmentDetail);
+    given(userRepository.findById(1L)).willReturn(Optional.of(user));
+    given(bankServerClient.getStockAccountDetail("firebase-uid-1", 3001L))
+        .willReturn(investmentDetail);
+    given(transactionServerClient.bankTransfer(any(), anyLong(), any(), any(), any(), any()))
+        .willReturn(transferResult);
 
     distributionService.distribute(1L, 1L);
 
@@ -231,7 +247,9 @@ class AutoDistributionServiceImplTest {
         buildAccountMapping(2001L, AccountMapping.MappingType.EMERGENCY);
     AccountMapping investmentMapping = buildAccountMapping(3001L, AccountMapping.MappingType.STOCK);
     BankServerClient.BankAccountDetailData emergencyDetail = buildAccountDetail("2001-111", "088");
-    BankServerClient.BankAccountDetailData investmentDetail = buildAccountDetail("3001-222", "088");
+    BankServerClient.StockAccountItem investmentDetail = buildStockAccountItem("3001-222", "088");
+    User user = User.builder().firebaseUid("firebase-uid-1").build();
+    TransactionServerClient.BankTransferResult transferResult = buildTransferResult(999L);
 
     given(settingRepository.findById(1L)).willReturn(Optional.of(setting));
     given(matchingRepository.findById(1L)).willReturn(Optional.of(matching));
@@ -247,7 +265,11 @@ class AutoDistributionServiceImplTest {
     given(accountMappingRepository.findByUserIdAndMappingType(1L, AccountMapping.MappingType.STOCK))
         .willReturn(Optional.of(investmentMapping));
     given(bankServerClient.getBankAccountDetail(2001L)).willReturn(emergencyDetail);
-    given(bankServerClient.getBankAccountDetail(3001L)).willReturn(investmentDetail);
+    given(userRepository.findById(1L)).willReturn(Optional.of(user));
+    given(bankServerClient.getStockAccountDetail("firebase-uid-1", 3001L))
+        .willReturn(investmentDetail);
+    given(transactionServerClient.bankTransfer(any(), anyLong(), any(), any(), any(), any()))
+        .willReturn(transferResult);
 
     distributionService.distribute(1L, 1L);
 
@@ -380,5 +402,20 @@ class AutoDistributionServiceImplTest {
     ReflectionTestUtils.setField(detail, "accountNumber", accountNumber);
     ReflectionTestUtils.setField(detail, "bankCode", bankCode);
     return detail;
+  }
+
+  private BankServerClient.StockAccountItem buildStockAccountItem(
+      String accountNumber, String bankCode) {
+    BankServerClient.StockAccountItem item = new BankServerClient.StockAccountItem();
+    ReflectionTestUtils.setField(item, "accountNumber", accountNumber);
+    ReflectionTestUtils.setField(item, "bankCode", bankCode);
+    return item;
+  }
+
+  private TransactionServerClient.BankTransferResult buildTransferResult(Long transferId) {
+    TransactionServerClient.BankTransferResult result =
+        new TransactionServerClient.BankTransferResult();
+    ReflectionTestUtils.setField(result, "transferId", transferId);
+    return result;
   }
 }
