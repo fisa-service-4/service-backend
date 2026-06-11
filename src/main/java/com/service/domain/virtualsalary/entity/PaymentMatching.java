@@ -41,6 +41,14 @@ public class PaymentMatching {
   @Column(name = "transaction_amount", precision = 18, scale = 2)
   private BigDecimal transactionAmount;
 
+  @Builder.Default
+  @Column(name = "distributed_yn", nullable = false)
+  private boolean distributedYn = false;
+
+  public void markDistributed() {
+    this.distributedYn = true;
+  }
+
   public void complete(Long bankTransactionId) {
     this.bankTransactionId = bankTransactionId;
     this.matchingStatus = MatchingStatus.MATCHED;

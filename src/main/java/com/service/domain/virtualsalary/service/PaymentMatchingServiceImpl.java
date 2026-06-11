@@ -5,22 +5,31 @@ import com.service.domain.mydata.repository.AccountMappingRepository;
 import com.service.domain.virtualsalary.dto.request.ManualMatchingRequest;
 import com.service.domain.virtualsalary.dto.response.ManualMatchingResponse;
 import com.service.domain.virtualsalary.dto.response.PaymentMatchingResponse;
+import com.service.domain.virtualsalary.entity.Contract;
 import com.service.domain.virtualsalary.entity.PaymentMatching;
 import com.service.domain.virtualsalary.enumtype.ContractStatus;
 import com.service.domain.virtualsalary.enumtype.MatchedBy;
 import com.service.domain.virtualsalary.enumtype.MatchingStatus;
+import com.service.domain.virtualsalary.repository.ContractRepository;
 import com.service.domain.virtualsalary.repository.PaymentMatchingRepository;
+import com.service.global.client.TransactionServerClient;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -32,8 +41,10 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
   private static final BigDecimal MATCH_THRESHOLD_RATE = new BigDecimal("0.97");
 
   private final PaymentMatchingRepository paymentMatchingRepository;
+  private final ContractRepository contractRepository;
   private final AutoDistributionService autoDistributionService;
   private final AccountMappingRepository accountMappingRepository;
+  private final TransactionServerClient transactionServerClient;
 
   @Override
   @Transactional(readOnly = true)
@@ -120,17 +131,34 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
       return;
     }
 
-    // 예상 수령액의 97% 이상이면 정상 입금으로 판단 (±3% 허용)
+    // 하한: actualIncome * 0.97, 상한: contractAmount * 1.03 (세전 전액 입금도 허용)
     for (PaymentMatching matching : tbcMatchings) {
       BigDecimal expectedIncome = matching.getContract().getSettlement().getActualIncome();
+      BigDecimal contractAmount = matching.getContract().getContractAmount();
       BigDecimal lowerThreshold = expectedIncome.multiply(MATCH_THRESHOLD_RATE);
-      BigDecimal upperThreshold = expectedIncome.multiply(new BigDecimal("1.03"));
+      BigDecimal upperThreshold = contractAmount.multiply(new BigDecimal("1.03"));
 
       if (depositAmount.compareTo(lowerThreshold) >= 0
           && depositAmount.compareTo(upperThreshold) <= 0) {
         matching.autoMatch(bankTransactionId, depositAmount);
         matching.getContract().updateContractStatus(ContractStatus.PAID);
-        autoDistributionService.distribute(userId, matching.getMatchingId());
+        boolean distributed = false;
+        try {
+          distributed = autoDistributionService.distribute(userId, matching.getMatchingId());
+        } catch (Exception e) {
+          log.warn(
+              "자동 분배 실패 (매칭은 저장됨): matchingId={}, error={}",
+              matching.getMatchingId(),
+              e.getMessage());
+        }
+        if (distributed) {
+          matching.markDistributed();
+        } else {
+          log.warn(
+              "자동 분배 스킵됨 (분배 없이 매칭만 저장): matchingId={}, userId={}",
+              matching.getMatchingId(),
+              userId);
+        }
         log.info(
             "자동 매칭 완료: matchingId={}, depositAmount={}, expectedIncome={}",
             matching.getMatchingId(),
@@ -163,6 +191,229 @@ public class PaymentMatchingServiceImpl implements PaymentMatchingService {
           matching.getMatchingId(),
           matching.getContract().getContractId(),
           matching.getContract().getExpectedPaymentDate());
+    }
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<Long> findUsersWithTbcMatchings() {
+    return paymentMatchingRepository.findDistinctUserIdsWithTbcMatchings();
+  }
+
+  @Override
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
+  public void pollAndMatchForUser(Long userId) {
+    Optional<AccountMapping> incomeOpt =
+        accountMappingRepository.findByUserIdAndMappingTypeFetch(
+            userId, AccountMapping.MappingType.INCOME);
+    if (incomeOpt.isEmpty()) {
+      log.debug("입금 폴링 스킵 - INCOME 계좌 미연결: userId={}", userId);
+      return;
+    }
+
+    Long accountId = incomeOpt.get().getLinkedFinancialAccount().getExternalAccountId();
+    String fromDate = LocalDate.now().minusDays(30).toString();
+    // toDate를 내일로 설정 — 오늘 입금 건이 서버에서 exclusive 처리될 경우에도 포함되도록 보장
+    String toDate = LocalDate.now().plusDays(1).toString();
+
+    log.info(
+        "입금 폴링 - 조회 계좌: accountId={}, fromDate={}, toDate={}, userId={}",
+        accountId,
+        fromDate,
+        toDate,
+        userId);
+
+    TransactionServerClient.TxPageData<TransactionServerClient.BankTransactionItem> result;
+    try {
+      result =
+          transactionServerClient.getBankTransactions(accountId, null, fromDate, toDate, 0, 200);
+    } catch (Exception e) {
+      log.warn(
+          "입금 폴링 실패 - 거래내역 조회 오류: userId={}, accountId={}, error={}",
+          userId,
+          accountId,
+          e.getMessage());
+      return;
+    }
+
+    if (result == null || result.getContent() == null || result.getContent().isEmpty()) {
+      log.info("입금 폴링 - 조회된 거래 없음: userId={}, accountId={}", userId, accountId);
+      return;
+    }
+
+    // 1. 성공 입금 건만 필터
+    List<TransactionServerClient.BankTransactionItem> availableDeposits =
+        result.getContent().stream()
+            .filter(tx -> "SUCCESS".equals(tx.getTransactionStatus()))
+            .filter(
+                tx -> {
+                  String t = tx.getTransactionType();
+                  return "DEPOSIT".equals(t) || "TRANSFER_IN".equals(t);
+                })
+            .collect(Collectors.toList());
+
+    log.info(
+        "입금 폴링 - 전체 거래: {}, 성공 입금: {}: userId={}",
+        result.getContent().size(),
+        availableDeposits.size(),
+        userId);
+
+    if (availableDeposits.isEmpty()) return;
+
+    // 2. 이미 MATCHED된 bankTransactionId 제외
+    Set<Long> matchedTxIds = paymentMatchingRepository.findMatchedTransactionIdsByUserId(userId);
+    availableDeposits.removeIf(tx -> matchedTxIds.contains(tx.getTransactionId()));
+
+    log.info("입금 폴링 - MATCHED 제외 후 가용 입금: {}: userId={}", availableDeposits.size(), userId);
+
+    if (availableDeposits.isEmpty()) return;
+
+    // 3. TBC 매칭 목록 조회 (contract + settlement fetch join으로 lazy load 방지)
+    List<PaymentMatching> tbcMatchings = paymentMatchingRepository.findTbcByUserIdFetch(userId);
+    log.info("입금 폴링 - TBC 매칭 수: {}: userId={}", tbcMatchings.size(), userId);
+    if (tbcMatchings.isEmpty()) return;
+
+    // 4. ±3% 이내 후보 쌍 구성 (차액 기준 정렬)
+    record Candidate(
+        BigDecimal diff,
+        PaymentMatching matching,
+        TransactionServerClient.BankTransactionItem deposit) {}
+
+    List<Candidate> candidates = new ArrayList<>();
+    BigDecimal upperRate = new BigDecimal("1.03");
+
+    for (PaymentMatching matching : tbcMatchings) {
+      BigDecimal actualIncome = matching.getContract().getSettlement().getActualIncome();
+      BigDecimal contractAmount = matching.getContract().getContractAmount();
+      // 하한: actualIncome * 0.97 (세후 기준 허용 하한)
+      // 상한: contractAmount * 1.03 (세전 전액 입금도 허용)
+      BigDecimal lower = actualIncome.multiply(MATCH_THRESHOLD_RATE);
+      BigDecimal upper = contractAmount.multiply(upperRate);
+
+      for (TransactionServerClient.BankTransactionItem tx : availableDeposits) {
+        BigDecimal amount = tx.getAmount();
+        if (amount.compareTo(lower) >= 0 && amount.compareTo(upper) <= 0) {
+          candidates.add(new Candidate(actualIncome.subtract(amount).abs(), matching, tx));
+        } else {
+          log.debug(
+              "입금 폴링 - 범위 외 (matchingId={}, actualIncome={}, contractAmount={}, amount={}, range=[{}, {}])",
+              matching.getMatchingId(),
+              actualIncome,
+              contractAmount,
+              amount,
+              lower,
+              upper);
+        }
+      }
+    }
+
+    log.info("입금 폴링 - 후보 수: {}: userId={}", candidates.size(), userId);
+
+    // 5. 차액 오름차순 그리디 배정
+    candidates.sort(Comparator.comparing(Candidate::diff));
+    Set<Long> usedMatchingIds = new HashSet<>();
+    Set<Long> usedDepositIds = new HashSet<>();
+
+    for (Candidate c : candidates) {
+      Long mId = c.matching().getMatchingId();
+      Long tId = c.deposit().getTransactionId();
+      if (usedMatchingIds.contains(mId) || usedDepositIds.contains(tId)) continue;
+
+      Contract contract = c.matching().getContract();
+      c.matching().autoMatch(tId, c.deposit().getAmount());
+      contract.updateContractStatus(ContractStatus.PAID);
+      boolean distributed = false;
+      try {
+        distributed = autoDistributionService.distribute(userId, mId);
+      } catch (Exception e) {
+        log.warn("자동 분배 실패 (매칭은 저장됨): matchingId={}, error={}", mId, e.getMessage());
+      }
+      if (distributed) {
+        c.matching().markDistributed();
+      } else {
+        log.warn("자동 분배 스킵됨 (분배 없이 매칭만 저장): matchingId={}, userId={}", mId, userId);
+      }
+      contractRepository.save(contract);
+      paymentMatchingRepository.save(c.matching());
+      usedMatchingIds.add(mId);
+      usedDepositIds.add(tId);
+
+      log.info(
+          "자동 매칭 완료: matchingId={}, depositAmount={}, expectedIncome={}",
+          mId,
+          c.deposit().getAmount(),
+          c.matching().getContract().getSettlement().getActualIncome());
+    }
+
+    // 6. 미매칭 TBC: 가장 가까운 입금 건 linkDeposit (불일치 표시용)
+    for (PaymentMatching matching : tbcMatchings) {
+      if (usedMatchingIds.contains(matching.getMatchingId())) continue;
+      if (availableDeposits.isEmpty()) continue;
+
+      BigDecimal expected = matching.getContract().getSettlement().getActualIncome();
+      availableDeposits.stream()
+          .filter(tx -> !usedDepositIds.contains(tx.getTransactionId()))
+          .min(Comparator.comparing(tx -> tx.getAmount().subtract(expected).abs()))
+          .ifPresent(
+              closest -> {
+                matching.linkDeposit(closest.getTransactionId(), closest.getAmount());
+                paymentMatchingRepository.save(matching);
+                log.info(
+                    "금액 불일치 - TBC linkDeposit: matchingId={}, depositAmount={}, expectedIncome={}",
+                    matching.getMatchingId(),
+                    closest.getAmount(),
+                    expected);
+              });
+    }
+  }
+
+  @Override
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
+  public void retryPendingDistributions() {
+    List<PaymentMatching> pending = paymentMatchingRepository.findMatchedWithoutDistributionFetch();
+    log.info("분배 재시도 시작: 미완료 건 수={}", pending.size());
+
+    for (PaymentMatching matching : pending) {
+      Long userId = matching.getContract().getUserId();
+      Long matchingId = matching.getMatchingId();
+      boolean distributed = false;
+      try {
+        distributed = autoDistributionService.distribute(userId, matchingId);
+      } catch (Exception e) {
+        log.warn(
+            "분배 재시도 실패: matchingId={}, userId={}, error={}", matchingId, userId, e.getMessage());
+      }
+      if (distributed) {
+        matching.markDistributed();
+        paymentMatchingRepository.save(matching);
+        log.info("분배 재시도 완료: matchingId={}, userId={}", matchingId, userId);
+      }
+    }
+
+    log.info("분배 재시도 완료");
+  }
+
+  @Override
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
+  public void retryDistributionForUser(Long userId) {
+    List<PaymentMatching> pending =
+        paymentMatchingRepository.findMatchedWithoutDistributionByUserIdFetch(userId);
+    log.info("분배 재시도(유저) 시작: userId={}, 미완료 건 수={}", userId, pending.size());
+
+    for (PaymentMatching matching : pending) {
+      Long matchingId = matching.getMatchingId();
+      boolean distributed = false;
+      try {
+        distributed = autoDistributionService.distribute(userId, matchingId);
+      } catch (Exception e) {
+        log.warn(
+            "분배 재시도 실패: matchingId={}, userId={}, error={}", matchingId, userId, e.getMessage());
+      }
+      if (distributed) {
+        matching.markDistributed();
+        paymentMatchingRepository.save(matching);
+        log.info("분배 재시도 완료: matchingId={}, userId={}", matchingId, userId);
+      }
     }
   }
 
