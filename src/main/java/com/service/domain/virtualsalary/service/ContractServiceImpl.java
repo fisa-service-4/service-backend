@@ -8,8 +8,10 @@ import com.service.domain.virtualsalary.entity.Contract;
 import com.service.domain.virtualsalary.entity.ContractSettlement;
 import com.service.domain.virtualsalary.entity.PaymentMatching;
 import com.service.domain.virtualsalary.enumtype.ContractStatus;
+import com.service.domain.virtualsalary.enumtype.MatchedBy;
 import com.service.domain.virtualsalary.enumtype.MatchingStatus;
 import com.service.domain.virtualsalary.repository.ContractRepository;
+import com.service.domain.virtualsalary.repository.PaymentMatchingRepository;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import java.math.BigDecimal;
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ContractServiceImpl implements ContractService {
 
   private final ContractRepository contractRepository;
+  private final PaymentMatchingRepository paymentMatchingRepository;
 
   @Override
   public ContractCreateResponse createContract(Long userId, ContractCreateRequest request) {
@@ -61,6 +64,14 @@ public class ContractServiceImpl implements ContractService {
     contract.assignSettlement(settlement);
 
     contractRepository.save(contract);
+
+    PaymentMatching matching =
+        PaymentMatching.builder()
+            .contract(contract)
+            .matchingStatus(MatchingStatus.TBC)
+            .matchedBy(MatchedBy.SYSTEM)
+            .build();
+    paymentMatchingRepository.save(matching);
 
     return ContractCreateResponse.builder()
         .contractId(contract.getContractId())

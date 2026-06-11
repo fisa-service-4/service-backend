@@ -19,4 +19,12 @@ public interface PaymentMatchingService {
       Long userId, Long accountId, Long bankTransactionId, BigDecimal depositAmount);
 
   void expireOverdueTbcMatchings();
+
+  List<Long> findUsersWithTbcMatchings();
+
+  void pollAndMatchForUser(Long userId);
+
+  void retryPendingDistributions();
+
+  void retryDistributionForUser(Long userId);
 }

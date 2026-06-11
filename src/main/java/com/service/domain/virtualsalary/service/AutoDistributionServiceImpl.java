@@ -2,6 +2,7 @@ package com.service.domain.virtualsalary.service;
 
 import com.service.domain.mydata.entity.AccountMapping;
 import com.service.domain.mydata.repository.AccountMappingRepository;
+import com.service.domain.user.repository.UserRepository;
 import com.service.domain.virtualsalary.entity.PaymentMatching;
 import com.service.domain.virtualsalary.entity.VirtualSalarySetting;
 import com.service.domain.virtualsalary.enumtype.VirtualSalaryCategory;
@@ -17,6 +18,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -30,15 +32,17 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
   private final PaymentMatchingRepository paymentMatchingRepository;
   private final VirtualSalarySettingRepository virtualSalarySettingRepository;
   private final AccountMappingRepository accountMappingRepository;
+  private final UserRepository userRepository;
   private final BankServerClient bankServerClient;
   private final TransactionServerClient transactionServerClient;
 
   @Override
-  public void distribute(Long userId, Long matchingId) {
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public boolean distribute(Long userId, Long matchingId) {
     VirtualSalarySetting setting = virtualSalarySettingRepository.findById(userId).orElse(null);
     if (setting == null) {
-      log.debug("자동 분배 스킵 - 가상월급 설정 없음: userId={}", userId);
-      return;
+      log.warn("자동 분배 스킵 - 가상월급 설정 없음 (POST /virtual-salary 필요): userId={}", userId);
+      return false;
     }
 
     PaymentMatching matching =
@@ -49,20 +53,30 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
     Long incomeAccountId = resolveAccountId(userId, AccountMapping.MappingType.INCOME);
     if (incomeAccountId == null) {
       log.warn("자동 분배 스킵 - INCOME 계좌 미연결: userId={}", userId);
-      return;
+      return false;
     }
 
-    // Issue 3 수정: 잔액 조회 실패 시 Long.MAX_VALUE 대신 early return
     BigDecimal incomeBalance;
     try {
       incomeBalance = bankServerClient.getAccountBalance(incomeAccountId);
     } catch (Exception e) {
       log.warn("자동 분배 스킵 - INCOME 잔액 조회 실패: userId={}", userId);
-      return;
+      return false;
     }
 
     BigDecimal actualIncome = matching.getContract().getSettlement().getActualIncome();
     DistributionResult result = calculate(actualIncome, incomeBalance, setting);
+
+    if (result.emergencyAmount().compareTo(ZERO) == 0
+        && result.investmentAmount().compareTo(ZERO) == 0) {
+      log.warn(
+          "자동 분배 - 이체 금액 0원: 비상금/투자 이체 없음 (설정 미입력 또는 잔액 부족). userId={}, matchingId={}"
+              + " | VirtualSalarySetting: emergencyAmount={}, investmentAmount={}",
+          userId,
+          matchingId,
+          setting.getEmergencyAmount(),
+          setting.getInvestmentAmount());
+    }
 
     executeTransfers(userId, incomeAccountId, result, setting);
 
@@ -73,6 +87,7 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
         result.emergencyAmount(),
         result.investmentAmount(),
         result.livingAmount());
+    return true;
   }
 
   private void executeTransfers(
@@ -84,7 +99,6 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
         try {
           BigDecimal actualEmergencyAmount = result.emergencyAmount();
 
-          // Issue 2 수정: 비상금 목표 금액에서 현재 잔액을 뺀 잔여 용량으로 cap
           if (setting.getEmergencyTargetAmount() != null) {
             BigDecimal currentEmergencyBalance =
                 bankServerClient.getAccountBalance(emergencyAccountId);
@@ -96,13 +110,15 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
           if (actualEmergencyAmount.compareTo(ZERO) > 0) {
             BankServerClient.BankAccountDetailData emergencyDetail =
                 bankServerClient.getBankAccountDetail(emergencyAccountId);
-            transactionServerClient.bankTransfer(
-                UUID.randomUUID().toString(),
-                incomeAccountId,
-                emergencyDetail.getBankCode(),
-                emergencyDetail.getAccountNumber(),
-                actualEmergencyAmount,
-                "AI");
+            TransactionServerClient.BankTransferResult emergencyTransfer =
+                transactionServerClient.bankTransfer(
+                    UUID.randomUUID().toString(),
+                    incomeAccountId,
+                    emergencyDetail.getBankCode(),
+                    emergencyDetail.getAccountNumber(),
+                    actualEmergencyAmount,
+                    "AI");
+            transactionServerClient.approveTransfer(emergencyTransfer.getTransferId());
             log.info("비상금 이체 완료: userId={}, amount={}", userId, actualEmergencyAmount);
           } else {
             log.info("비상금 이체 스킵 - 목표 금액 달성: userId={}", userId);
@@ -117,15 +133,22 @@ public class AutoDistributionServiceImpl implements AutoDistributionService {
       Long investmentAccountId = resolveAccountId(userId, AccountMapping.MappingType.STOCK);
       if (investmentAccountId != null) {
         try {
-          BankServerClient.BankAccountDetailData investmentDetail =
-              bankServerClient.getBankAccountDetail(investmentAccountId);
-          transactionServerClient.bankTransfer(
-              UUID.randomUUID().toString(),
-              incomeAccountId,
-              investmentDetail.getBankCode(),
-              investmentDetail.getAccountNumber(),
-              result.investmentAmount(),
-              "AI");
+          String firebaseUid =
+              userRepository
+                  .findById(userId)
+                  .map(u -> u.getFirebaseUid())
+                  .orElseThrow(() -> new RuntimeException("사용자 조회 실패: userId=" + userId));
+          BankServerClient.StockAccountItem investmentDetail =
+              bankServerClient.getStockAccountDetail(firebaseUid, investmentAccountId);
+          TransactionServerClient.BankTransferResult investmentTransfer =
+              transactionServerClient.bankTransfer(
+                  UUID.randomUUID().toString(),
+                  incomeAccountId,
+                  investmentDetail.getBankCode(),
+                  investmentDetail.getAccountNumber(),
+                  result.investmentAmount(),
+                  "AI");
+          transactionServerClient.approveTransfer(investmentTransfer.getTransferId());
           log.info("투자 이체 완료: userId={}, amount={}", userId, result.investmentAmount());
         } catch (Exception e) {
           log.warn("투자 이체 실패: userId={}, error={}", userId, e.getMessage());

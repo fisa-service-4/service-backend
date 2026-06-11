@@ -9,15 +9,14 @@ import com.service.domain.aichat.dto.response.SessionCreateResponse;
 import com.service.domain.aichat.dto.response.SessionListResponse;
 import com.service.domain.aichat.entity.AiChatMessage;
 import com.service.domain.aichat.entity.AiChatSession;
-import com.service.domain.aichat.enumtype.MessageRole;
 import com.service.domain.aichat.enumtype.SessionStatus;
 import com.service.domain.aichat.enumtype.SessionType;
 import com.service.domain.aichat.repository.AiChatMessageRepository;
 import com.service.domain.aichat.repository.AiChatSessionRepository;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
-import lombok.RequiredArgsConstructor;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -74,7 +73,9 @@ public class AiChatService {
 
   public Page<MessageListResponse> getMessages(Long userId, Long sessionId, Pageable pageable) {
     findSessionByUser(sessionId, userId);
-    return messageRepository.findBySessionSessionId(sessionId, pageable).map(MessageListResponse::from);
+    return messageRepository
+        .findBySessionSessionId(sessionId, pageable)
+        .map(MessageListResponse::from);
   }
 
   @Transactional

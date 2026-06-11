@@ -64,6 +64,17 @@ public class BankServerClient {
     return body.getData();
   }
 
+  public StockAccountItem getStockAccountDetail(String firebaseUid, Long accountId) {
+    ConnectionsData connections = getConnections(firebaseUid);
+    if (connections.getStockAccounts() == null) {
+      throw new RuntimeException("투자 계좌 조회 실패: 계좌 목록 없음");
+    }
+    return connections.getStockAccounts().stream()
+        .filter(a -> accountId.equals(a.getAccountId()))
+        .findFirst()
+        .orElseThrow(() -> new RuntimeException("투자 계좌 조회 실패: accountId=" + accountId));
+  }
+
   @Getter
   @NoArgsConstructor
   static class ConnectionsWrapper {

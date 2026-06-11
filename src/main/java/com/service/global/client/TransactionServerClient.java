@@ -525,6 +525,47 @@ public class TransactionServerClient {
   }
 
   // ───────────────────────────────────────────────
+  // 은행 거래내역 조회
+  // ───────────────────────────────────────────────
+
+  public TxPageData<BankTransactionItem> getBankTransactions(
+      Long accountId, String type, String fromDate, String toDate, int page, int size) {
+    try {
+      TxResponse<TxPageData<BankTransactionItem>> response =
+          transactionServerRestClient
+              .get()
+              .uri(
+                  uriBuilder ->
+                      uriBuilder
+                          .path("/baas/v1/bank/accounts/{accountId}/transactions")
+                          .queryParamIfPresent("type", java.util.Optional.ofNullable(type))
+                          .queryParamIfPresent("fromDate", java.util.Optional.ofNullable(fromDate))
+                          .queryParamIfPresent("toDate", java.util.Optional.ofNullable(toDate))
+                          .queryParam("page", page)
+                          .queryParam("size", size)
+                          .build(accountId))
+              .retrieve()
+              .body(new ParameterizedTypeReference<>() {});
+      return response != null ? response.getData() : null;
+    } catch (RestClientResponseException e) {
+      throw mapError(e);
+    }
+  }
+
+  @Getter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class BankTransactionItem {
+    private Long transactionId;
+    private String transactionType;
+    private java.math.BigDecimal amount;
+    private java.math.BigDecimal balanceAfter;
+    private String transactionChannel;
+    private String transactionStatus;
+    private java.time.LocalDateTime transactionAt;
+  }
+
+  // ───────────────────────────────────────────────
   // 에러 처리
   // ───────────────────────────────────────────────
 
