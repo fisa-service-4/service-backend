@@ -131,7 +131,8 @@ public class AiServerClient {
           restTemplate.exchange(
               url, HttpMethod.POST, new HttpEntity<>(requestBody, headers), ChatRunWrapper.class);
       ChatRunWrapper body = response.getBody();
-      if (body == null || body.getData() == null) {
+      if (body == null || !body.isSuccess() || body.getData() == null) {
+        log.warn("AI 서버 응답 실패: success={}", body != null && body.isSuccess());
         throw new BusinessException(ErrorCode.AI_001);
       }
       ChatRunResult result = body.getData();
