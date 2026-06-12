@@ -13,6 +13,7 @@ import com.service.domain.aichat.enumtype.SessionStatus;
 import com.service.domain.aichat.enumtype.SessionType;
 import com.service.domain.aichat.repository.AiChatMessageRepository;
 import com.service.domain.aichat.repository.AiChatSessionRepository;
+import com.service.global.client.AiServerClient;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import java.util.List;
@@ -29,6 +30,7 @@ public class AiChatService {
 
   private final AiChatSessionRepository sessionRepository;
   private final AiChatMessageRepository messageRepository;
+  private final AiServerClient aiServerClient;
 
   @Transactional
   public SessionCreateResponse createSession(Long userId, CreateSessionRequest request) {
@@ -50,8 +52,26 @@ public class AiChatService {
         .toList();
   }
 
+  public MessageCreateResponse runChatAgent(
+      Long userId, Long sessionId, String message, Boolean isPin, String authorization) {
+    AiChatSession session = findSessionByUser(sessionId, userId);
+    if (session.getStatus() == SessionStatus.CLOSED) {
+      throw new BusinessException(ErrorCode.AI_004);
+    }
+    AiServerClient.ChatRunResult result =
+        aiServerClient.runChatAgent(sessionId, message, isPin, authorization);
+    return MessageCreateResponse.builder()
+        .messageId(result.getMessageId())
+        .role(result.getRole())
+        .intent(result.getIntent())
+        .content(result.getContent())
+        .actionRequired(result.getActionRequired())
+        .requirePin(result.getRequirePin())
+        .build();
+  }
+
   @Transactional
-  public MessageCreateResponse createMessage(Long userId, CreateMessageRequest request) {
+  public MessageCreateResponse recordMessage(Long userId, CreateMessageRequest request) {
     AiChatSession session = findSessionByUser(request.getSessionId(), userId);
 
     if (session.getStatus() == SessionStatus.CLOSED) {

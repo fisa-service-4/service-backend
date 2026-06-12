@@ -2,6 +2,7 @@ package com.service.domain.aichat.controller;
 
 import com.service.domain.aichat.dto.request.CreateMessageRequest;
 import com.service.domain.aichat.dto.request.CreateSessionRequest;
+import com.service.domain.aichat.dto.request.SendMessageRequest;
 import com.service.domain.aichat.dto.response.MessageCreateResponse;
 import com.service.domain.aichat.dto.response.MessageListResponse;
 import com.service.domain.aichat.dto.response.SessionCloseResponse;
@@ -64,7 +65,34 @@ public class AiChatController {
     return ResponseEntity.ok(ApiResponse.success(aiChatService.getSessions(userId)));
   }
 
-  @Operation(summary = "메시지 저장")
+  @Operation(summary = "AI 채팅 메시지 전송")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200",
+        description = "AI 응답 성공"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "400",
+        description = "AI_004: 이미 종료된 세션"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "401",
+        description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "503",
+        description = "AI_001: AI 응답 생성 실패 | AI_002: AI 서버 연결 실패")
+  })
+  @PostMapping("/run")
+  public ResponseEntity<ApiResponse<MessageCreateResponse>> runChatAgent(
+      Authentication authentication,
+      @RequestHeader("Authorization") String authorization,
+      @Valid @RequestBody SendMessageRequest request) {
+    Long userId = (Long) authentication.getPrincipal();
+    return ResponseEntity.ok(
+        ApiResponse.success(
+            aiChatService.runChatAgent(
+                userId, request.getSessionId(), request.getMessage(), request.getIsPin(), authorization)));
+  }
+
+  @Operation(summary = "메시지 저장 (AI 서버 콜백)")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "200",
@@ -76,11 +104,11 @@ public class AiChatController {
         responseCode = "401",
         description = "AUTH_004: 만료된 토큰 | AUTH_005: 유효하지 않은 토큰")
   })
-  @PostMapping("/messages")
-  public ResponseEntity<ApiResponse<MessageCreateResponse>> createMessage(
+  @PostMapping("/messages/record")
+  public ResponseEntity<ApiResponse<MessageCreateResponse>> recordMessage(
       Authentication authentication, @Valid @RequestBody CreateMessageRequest request) {
     Long userId = (Long) authentication.getPrincipal();
-    return ResponseEntity.ok(ApiResponse.success(aiChatService.createMessage(userId, request)));
+    return ResponseEntity.ok(ApiResponse.success(aiChatService.recordMessage(userId, request)));
   }
 
   @Operation(summary = "채팅 메시지 목록 조회")
