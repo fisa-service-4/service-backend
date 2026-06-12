@@ -9,8 +9,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +31,7 @@ public class RawTransactionSyncService {
    * <p>source_transaction_id(= integrated_transaction_id) 기준 워터마크 폴링 방식으로 중복 적재를 방지한다. 1회 최대
    * BATCH_SIZE건 처리하며, 다음 실행 주기에 이어서 동기화된다.
    */
-  public Set<Long> sync() {
+  public void sync() {
     long lastSyncedId = analysisRawTransactionRepository.findMaxSourceTransactionId().orElse(0L);
 
     List<IntegratedTransactionHistory> newTxs =
@@ -43,18 +41,14 @@ public class RawTransactionSyncService {
 
     if (newTxs.isEmpty()) {
       log.debug("동기화할 신규 거래내역 없음 (lastSyncedId={})", lastSyncedId);
-      return Set.of();
+      return;
     }
 
     log.info("거래내역 분석 DB 동기화 시작: {}건 (lastSyncedId={})", newTxs.size(), lastSyncedId);
     List<AnalysisRawTransaction> records =
         newTxs.stream().map(this::toAnalysisRawTransaction).toList();
     analysisRawTransactionRepository.saveAll(records);
-
-    Set<Long> affectedUserIds =
-        records.stream().map(AnalysisRawTransaction::getUserId).collect(Collectors.toSet());
-    log.info("거래내역 분석 DB 동기화 완료: {}건, 영향 사용자: {}명", records.size(), affectedUserIds.size());
-    return affectedUserIds;
+    log.info("거래내역 분석 DB 동기화 완료: {}건", records.size());
   }
 
   private AnalysisRawTransaction toAnalysisRawTransaction(IntegratedTransactionHistory tx) {
