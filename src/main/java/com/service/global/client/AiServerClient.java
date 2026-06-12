@@ -100,6 +100,15 @@ public class AiServerClient {
   @Setter
   @NoArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
+  static class ChatRunWrapper {
+    private boolean success;
+    private ChatRunResult data;
+  }
+
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class RecommendationResult {
     private BigDecimal recommendedTargetSalary;
     private BigDecimal recommendedEmergencyAmount;
@@ -118,13 +127,14 @@ public class AiServerClient {
     ChatRunRequest requestBody = new ChatRunRequest(sessionId, message, isPin != null && isPin);
 
     try {
-      ResponseEntity<ChatRunResult> response =
+      ResponseEntity<ChatRunWrapper> response =
           restTemplate.exchange(
-              url, HttpMethod.POST, new HttpEntity<>(requestBody, headers), ChatRunResult.class);
-      ChatRunResult result = response.getBody();
-      if (result == null) {
+              url, HttpMethod.POST, new HttpEntity<>(requestBody, headers), ChatRunWrapper.class);
+      ChatRunWrapper body = response.getBody();
+      if (body == null || body.getData() == null) {
         throw new BusinessException(ErrorCode.AI_001);
       }
+      ChatRunResult result = body.getData();
       success = true;
       return result;
     } catch (ResourceAccessException e) {
