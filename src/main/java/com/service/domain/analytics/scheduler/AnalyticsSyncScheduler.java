@@ -2,6 +2,8 @@ package com.service.domain.analytics.scheduler;
 
 import com.service.domain.analytics.service.AssetSnapshotService;
 import com.service.domain.analytics.service.RawTransactionSyncService;
+import com.service.global.client.AiServerClient;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,13 +16,15 @@ public class AnalyticsSyncScheduler {
 
   private final RawTransactionSyncService rawTransactionSyncService;
   private final AssetSnapshotService assetSnapshotService;
+  private final AiServerClient aiServerClient;
 
-  /** 5분마다 신규 거래내역을 분석 DB로 동기화 */
+  /** 5분마다 신규 거래내역을 분석 DB로 동기화 후 영향받은 사용자 AI 파이프라인 트리거 */
   @Scheduled(fixedDelay = 300000)
   public void syncRawTransactions() {
     log.info("거래내역 분석 DB 동기화 스케줄러 실행");
     try {
-      rawTransactionSyncService.sync();
+      Set<Long> affectedUserIds = rawTransactionSyncService.sync();
+      affectedUserIds.forEach(aiServerClient::triggerPipeline);
     } catch (Exception e) {
       log.error("거래내역 분석 DB 동기화 실패: {}", e.getMessage(), e);
     }

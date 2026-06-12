@@ -163,6 +163,16 @@ public class AiServerClient {
     }
   }
 
+  public void triggerPipeline(Long userId) {
+    String url = aiServerUrl + "/admin/pipeline/run?user_id=" + userId;
+    try {
+      restTemplate.postForEntity(url, null, Void.class);
+      log.info("[Pipeline] 트리거 성공 (userId={})", userId);
+    } catch (Exception e) {
+      log.warn("[Pipeline] 트리거 실패 (userId={}): {}", userId, e.getMessage());
+    }
+  }
+
   @Getter
   @AllArgsConstructor
   @JsonIgnoreProperties(ignoreUnknown = true)
