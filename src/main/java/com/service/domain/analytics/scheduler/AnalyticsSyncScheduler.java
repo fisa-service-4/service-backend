@@ -5,6 +5,7 @@ import com.service.domain.analytics.service.AssetSnapshotService;
 import com.service.domain.analytics.service.RawTransactionSyncService;
 import com.service.global.client.AiServerClient;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -38,7 +39,8 @@ public class AnalyticsSyncScheduler {
     try {
       List<Long> userIds = analysisRawTransactionRepository.findDistinctUserIds();
       log.info("AI 파이프라인 대상 사용자: {}명", userIds.size());
-      userIds.forEach(aiServerClient::triggerPipeline);
+      userIds.forEach(userId ->
+          CompletableFuture.runAsync(() -> aiServerClient.triggerPipeline(userId)));
     } catch (Exception e) {
       log.error("월간 AI 파이프라인 실행 실패: {}", e.getMessage(), e);
     }
