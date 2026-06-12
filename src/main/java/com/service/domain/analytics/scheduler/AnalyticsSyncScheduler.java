@@ -33,7 +33,7 @@ public class AnalyticsSyncScheduler {
   }
 
   /** 매월 1일 자정 전체 사용자 AI 파이프라인 실행 */
-  @Scheduled(cron = "0 0 0 1 * *")
+  @Scheduled(cron = "0 0 0 1 * *", zone = "Asia/Seoul")
   public void runMonthlyPipeline() {
     log.info("월간 AI 파이프라인 스케줄러 실행");
     try {
