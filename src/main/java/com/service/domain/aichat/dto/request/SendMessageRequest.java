@@ -9,11 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SendMessageRequest {
 
-  @NotNull
-  private Long sessionId;
+  @NotNull private Long sessionId;
 
-  @NotBlank
-  private String message;
+  @NotBlank private String message;
 
   private Boolean isPin = false;
 }

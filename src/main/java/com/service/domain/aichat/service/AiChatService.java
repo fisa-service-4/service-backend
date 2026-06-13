@@ -52,22 +52,45 @@ public class AiChatService {
         .toList();
   }
 
+  @Transactional
   public MessageCreateResponse runChatAgent(
       Long userId, Long sessionId, String message, Boolean isPin, String authorization) {
     AiChatSession session = findSessionByUser(sessionId, userId);
     if (session.getStatus() == SessionStatus.CLOSED) {
       throw new BusinessException(ErrorCode.AI_004);
     }
+
     AiServerClient.ChatRunResult result =
         aiServerClient.runChatAgent(sessionId, message, isPin, authorization);
+
+    if (session.getSessionType() == SessionType.CHAT && result.getIntent() != null) {
+      SessionType inferred = inferSessionType(result.getIntent());
+      if (inferred != SessionType.CHAT) {
+        session.updateSessionType(inferred);
+      } else {
+        session.touch();
+      }
+    } else {
+      session.touch();
+    }
+
     return MessageCreateResponse.builder()
-        .messageId(result.getMessageId())
+        .messageId(null)
         .role(result.getRole())
         .intent(result.getIntent())
         .content(result.getContent())
         .actionRequired(result.getActionRequired())
         .requirePin(result.getRequirePin())
         .build();
+  }
+
+  private SessionType inferSessionType(String intent) {
+    return switch (intent) {
+      case "STOCK" -> SessionType.STOCK;
+      case "TRANSFER" -> SessionType.TRANSFER;
+      case "ANALYSIS", "ASSET" -> SessionType.ANALYSIS;
+      default -> SessionType.CHAT;
+    };
   }
 
   @Transactional

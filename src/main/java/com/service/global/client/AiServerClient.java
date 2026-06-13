@@ -116,8 +116,9 @@ public class AiServerClient {
     private String summary;
   }
 
-  public ChatRunResult runChatAgent(Long sessionId, String message, Boolean isPin, String authorization) {
-    String url = aiServerUrl + "/chat/run";
+  public ChatRunResult runChatAgent(
+      Long sessionId, String message, Boolean isPin, String authorization) {
+    String url = aiServerUrl + "/chat/messages";
     Long userId = getCurrentUserId();
     long startTime = System.currentTimeMillis();
     boolean success = false;
@@ -142,10 +143,7 @@ public class AiServerClient {
       log.error("AI 서버 연결 실패: {}", e.getMessage());
       throw new BusinessException(ErrorCode.AI_002);
     } catch (RestClientResponseException e) {
-      log.error(
-          "AI 서버 에러 응답 (status={}, body={})",
-          e.getStatusCode(),
-          e.getResponseBodyAsString());
+      log.error("AI 서버 에러 응답 (status={}, body={})", e.getStatusCode(), e.getResponseBodyAsString());
       throw new BusinessException(ErrorCode.AI_001);
     } catch (BusinessException e) {
       throw e;

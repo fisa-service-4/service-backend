@@ -1,9 +1,9 @@
 package com.service.domain.admin.controller;
 
 import com.service.domain.admin.dto.request.ErrorLogResolveRequest;
+import com.service.domain.admin.dto.response.AdminAiChatSessionResponse;
 import com.service.domain.admin.dto.response.AdminStockOrderLogResponse;
 import com.service.domain.admin.dto.response.AdminTransferLogResponse;
-import com.service.domain.admin.dto.response.AiLogResponse;
 import com.service.domain.admin.dto.response.ApiLogResponse;
 import com.service.domain.admin.dto.response.ErrorLogResponse;
 import com.service.domain.admin.dto.response.LoginLogResponse;
@@ -47,20 +47,19 @@ public class AdminLogController {
             adminLogService.getLoginLogs(userId, loginType, startDate, endDate, pageable)));
   }
 
-  @Operation(summary = "AI 로그 조회")
+  @Operation(summary = "AI 채팅 세션 조회")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "조회 성공"),
     @ApiResponse(responseCode = "403", description = "ADMIN_001: 관리자 권한 필요")
   })
   @GetMapping("/ai")
-  public ResponseEntity<com.service.global.response.ApiResponse<Page<AiLogResponse>>> getAiLogs(
-      @RequestParam(required = false) Long userId,
-      @RequestParam(required = false) String startDate,
-      @RequestParam(required = false) String endDate,
-      @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
+  public ResponseEntity<com.service.global.response.ApiResponse<Page<AdminAiChatSessionResponse>>>
+      getAiChatSessions(
+          @RequestParam(required = false) String sessionType,
+          @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
     return ResponseEntity.ok(
         com.service.global.response.ApiResponse.success(
-            adminLogService.getAiLogs(userId, startDate, endDate, pageable)));
+            adminLogService.getAiChatSessions(sessionType, pageable)));
   }
 
   @Operation(summary = "오류 로그 조회")

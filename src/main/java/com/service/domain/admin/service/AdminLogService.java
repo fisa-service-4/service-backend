@@ -1,6 +1,7 @@
 package com.service.domain.admin.service;
 
 import com.service.domain.admin.dto.request.ErrorLogResolveRequest;
+import com.service.domain.admin.dto.response.AdminAiChatSessionResponse;
 import com.service.domain.admin.dto.response.AdminStockOrderLogResponse;
 import com.service.domain.admin.dto.response.AdminTransferLogResponse;
 import com.service.domain.admin.dto.response.AiLogResponse;
@@ -24,15 +25,23 @@ import com.service.domain.user.repository.UserRepository;
 import com.service.global.client.BankAdminClient;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.Predicate;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.redis.core.Cursor;
@@ -41,12 +50,19 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminLogService {
 
   private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
   private static final String REFRESH_TOKEN_PATTERN = "refresh:*";
+
+  @PersistenceContext(unitName = "operational")
+  private EntityManager entityManager;
+
+  @PersistenceContext(unitName = "log")
+  private EntityManager logEntityManager;
 
   private final LoginHistoryRepository loginHistoryRepository;
   private final AiUsageLogRepository aiUsageLogRepository;
@@ -103,6 +119,75 @@ public class AdminLogService {
               String userName = log.getUserId() != null ? resolveUserName(log.getUserId()) : null;
               return AiLogResponse.of(log, userName);
             });
+  }
+
+  @Transactional(readOnly = true)
+  public Page<AdminAiChatSessionResponse> getAiChatSessions(String sessionType, Pageable pageable) {
+    String intentWhere = buildIntentWhere(sessionType);
+
+    String countSql = "SELECT COUNT(DISTINCT s.session_id) FROM ai_chat_session s" + intentWhere;
+    String dataSql =
+        "SELECT s.session_id, s.user_id, s.session_type, s.updated_at"
+            + " FROM ai_chat_session s"
+            + intentWhere
+            + " ORDER BY s.updated_at DESC";
+
+    jakarta.persistence.Query countQuery = entityManager.createNativeQuery(countSql);
+    long total = ((Number) countQuery.getSingleResult()).longValue();
+
+    jakarta.persistence.Query dataQuery = entityManager.createNativeQuery(dataSql);
+    dataQuery.setFirstResult((int) pageable.getOffset());
+    dataQuery.setMaxResults(pageable.getPageSize());
+
+    @SuppressWarnings("unchecked")
+    List<Object[]> rows = dataQuery.getResultList();
+
+    List<Long> sessionIds = rows.stream().map(row -> ((Number) row[0]).longValue()).toList();
+    Map<Long, String> promptMap = fetchLatestUserPrompts(sessionIds);
+
+    List<AdminAiChatSessionResponse> content =
+        rows.stream()
+            .map(
+                row -> {
+                  Long sessionId = ((Number) row[0]).longValue();
+                  return AdminAiChatSessionResponse.of(
+                      sessionId,
+                      ((Number) row[1]).longValue(),
+                      (String) row[2],
+                      promptMap.get(sessionId),
+                      row[3] instanceof Timestamp ts
+                          ? ts.toLocalDateTime()
+                          : (LocalDateTime) row[3]);
+                })
+            .toList();
+
+    return new PageImpl<>(content, pageable, total);
+  }
+
+  private Map<Long, String> fetchLatestUserPrompts(List<Long> sessionIds) {
+    if (sessionIds.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    try {
+      String sql =
+          "SELECT DISTINCT ON (session_id) session_id, user_prompt"
+              + " FROM ai_prompt_log"
+              + " WHERE session_id IN :ids"
+              + " AND user_prompt IS NOT NULL"
+              + " ORDER BY session_id, created_at DESC";
+      jakarta.persistence.Query q = logEntityManager.createNativeQuery(sql);
+      q.setParameter("ids", sessionIds);
+      @SuppressWarnings("unchecked")
+      List<Object[]> rows = q.getResultList();
+      Map<Long, String> result = new HashMap<>();
+      for (Object[] row : rows) {
+        result.put(((Number) row[0]).longValue(), (String) row[1]);
+      }
+      return result;
+    } catch (Exception e) {
+      log.warn("AI_PROMPT_LOG 조회 실패 (로그 DB 미기동 가능): {}", e.getMessage());
+      return Collections.emptyMap();
+    }
   }
 
   @Transactional(readOnly = true)
@@ -235,6 +320,15 @@ public class AdminLogService {
       }
     }
     return count;
+  }
+
+  private String buildIntentWhere(String sessionType) {
+    if (sessionType == null) return "";
+    return switch (sessionType) {
+      case "CHAT", "TRANSFER", "STOCK", "ANALYSIS" ->
+          " WHERE s.session_type = '" + sessionType + "'";
+      default -> "";
+    };
   }
 
   private String resolveUserName(Long userId) {
