@@ -55,7 +55,7 @@ public class AdminLogController {
   @GetMapping("/ai")
   public ResponseEntity<com.service.global.response.ApiResponse<Page<AdminAiChatSessionResponse>>>
       getAiChatSessions(
-          @RequestParam(required = false) String sessionType,
+          @RequestParam(required = false) com.service.domain.aichat.enumtype.SessionType sessionType,
           @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
     return ResponseEntity.ok(
         com.service.global.response.ApiResponse.success(
