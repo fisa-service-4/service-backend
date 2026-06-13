@@ -170,11 +170,13 @@ public class AdminLogService {
     }
     try {
       String sql =
-          "SELECT DISTINCT ON (session_id) session_id, user_prompt"
-              + " FROM ai_prompt_log"
-              + " WHERE session_id IN :ids"
-              + " AND user_prompt IS NOT NULL"
-              + " ORDER BY session_id, created_at DESC";
+          "SELECT session_id, user_prompt FROM ("
+              + "  SELECT session_id, user_prompt, "
+              + "         ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY created_at DESC) as rn"
+              + "  FROM ai_prompt_log"
+              + "  WHERE session_id IN :ids"
+              + "    AND user_prompt IS NOT NULL"
+              + ") t WHERE t.rn = 1";
       jakarta.persistence.Query q = logEntityManager.createNativeQuery(sql);
       q.setParameter("ids", sessionIds);
       @SuppressWarnings("unchecked")
