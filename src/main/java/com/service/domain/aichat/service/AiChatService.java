@@ -53,7 +53,12 @@ public class AiChatService {
   }
 
   public MessageCreateResponse runChatAgent(
-      Long userId, Long sessionId, String message, Boolean isPin, String authorization, Long accountId) {
+      Long userId,
+      Long sessionId,
+      String message,
+      Boolean isPin,
+      String authorization,
+      Long accountId) {
     AiChatSession session = findSessionByUser(sessionId, userId);
     if (session.getStatus() == SessionStatus.CLOSED) {
       throw new BusinessException(ErrorCode.AI_004);

@@ -44,8 +44,7 @@ class FavoriteStockServiceTest {
 
     given(favoriteStockRepository.existsByUserIdAndStockCode(userId, "005930")).willReturn(false);
 
-    FavoriteStock savedEntity =
-        FavoriteStock.builder().userId(userId).stockCode("005930").build();
+    FavoriteStock savedEntity = FavoriteStock.builder().userId(userId).stockCode("005930").build();
     ReflectionTestUtils.setField(savedEntity, "favoriteStockId", 10L);
     given(favoriteStockRepository.save(any(FavoriteStock.class))).willReturn(savedEntity);
 
@@ -76,8 +75,7 @@ class FavoriteStockServiceTest {
   void deleteFavorite_deletesEntitySuccessfully() {
     Long userId = 1L;
     Long favoriteId = 10L;
-    FavoriteStock entity =
-        FavoriteStock.builder().userId(userId).stockCode("005930").build();
+    FavoriteStock entity = FavoriteStock.builder().userId(userId).stockCode("005930").build();
 
     given(favoriteStockRepository.findByFavoriteStockIdAndUserId(favoriteId, userId))
         .willReturn(Optional.of(entity));
@@ -106,8 +104,7 @@ class FavoriteStockServiceTest {
   @DisplayName("관심 종목 목록 조회 시 각 종목의 현재가 정보를 포함하여 반환한다")
   void getFavorites_returnsListWithCurrentPrice() {
     Long userId = 1L;
-    FavoriteStock favorite =
-        FavoriteStock.builder().userId(userId).stockCode("005930").build();
+    FavoriteStock favorite = FavoriteStock.builder().userId(userId).stockCode("005930").build();
     ReflectionTestUtils.setField(favorite, "favoriteStockId", 10L);
 
     StockPriceItem priceItem = new StockPriceItem();
