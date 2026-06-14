@@ -93,7 +93,8 @@ public class AiChatController {
                 request.getSessionId(),
                 request.getMessage(),
                 request.getIsPin(),
-                authorization)));
+                authorization,
+                request.getAccountId()));
   }
 
   @Operation(summary = "메시지 저장 (AI 서버 콜백)")
