@@ -46,6 +46,8 @@ class StockServiceTest {
     CashBalanceResponse response = stockService.getCashBalance(accountId);
 
     assertThat(response).isNotNull();
+    assertThat(response.getCashBalance()).isEqualByComparingTo(new BigDecimal("500000"));
+    assertThat(response.getAvailableBalance()).isEqualByComparingTo(new BigDecimal("480000"));
     then(transactionServerClient).should().getCashBalance(accountId);
   }
 
