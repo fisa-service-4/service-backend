@@ -2,6 +2,7 @@ package com.service.global.client;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -22,6 +24,24 @@ public class BankServerClient {
 
   @Value("${mydata.server.url}")
   private String mydataServerUrl;
+
+  public void connectProvider(String firebaseUid, String provider) {
+    String url = mydataServerUrl + "/connect";
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("X-Firebase-Uid", firebaseUid);
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    Map<String, String> requestBody = Map.of("provider", provider);
+    ResponseEntity<ConnectWrapper> response =
+        restTemplate.exchange(
+            url,
+            HttpMethod.POST,
+            new HttpEntity<>(requestBody, headers),
+            new ParameterizedTypeReference<>() {});
+    ConnectWrapper body = response.getBody();
+    if (body == null || !body.isSuccess()) {
+      throw new RuntimeException("mydata-server 연동 실패: provider=" + provider);
+    }
+  }
 
   public ConnectionsData getConnections(String firebaseUid) {
     String url = mydataServerUrl + "/connections";
@@ -73,6 +93,21 @@ public class BankServerClient {
         .filter(a -> accountId.equals(a.getAccountId()))
         .findFirst()
         .orElseThrow(() -> new RuntimeException("투자 계좌 조회 실패: accountId=" + accountId));
+  }
+
+  @Getter
+  @NoArgsConstructor
+  static class ConnectWrapper {
+    private boolean success;
+    private ConnectData data;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  public static class ConnectData {
+    private boolean connected;
+    private boolean bankLinked;
+    private boolean stockLinked;
   }
 
   @Getter
