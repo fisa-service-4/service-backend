@@ -130,6 +130,10 @@ public class AccountService {
         .build();
   }
 
+  public void syncForConnections(User user, BankServerClient.ConnectionsData data) {
+    syncLinkedAccounts(user, data.getBankAccounts(), data.getStockAccounts());
+  }
+
   private void syncLinkedAccounts(
       User user,
       List<BankServerClient.BankAccountItem> bankAccounts,
