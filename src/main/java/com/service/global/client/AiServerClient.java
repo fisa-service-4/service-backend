@@ -125,7 +125,6 @@ public class AiServerClient {
 
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", authorization);
-<<<<<<< Updated upstream
     ChatRunRequest requestBody =
         new ChatRunRequest(sessionId, message, isPin != null && isPin, accountId);
 

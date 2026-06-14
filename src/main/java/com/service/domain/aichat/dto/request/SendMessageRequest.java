@@ -14,4 +14,6 @@ public class SendMessageRequest {
   @NotBlank private String message;
 
   private Boolean isPin = false;
+
+  private Long accountId;
 }
