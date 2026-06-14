@@ -51,6 +51,8 @@ class ExecutionServiceTest {
     assertThat(response.getPage()).isEqualTo(page);
     assertThat(response.getSize()).isEqualTo(size);
     assertThat(response.getTotalElements()).isZero();
-    then(transactionServerClient).should().getExecutions(accountId, stockCode, from, to, page, size);
+    then(transactionServerClient)
+        .should()
+        .getExecutions(accountId, stockCode, from, to, page, size);
   }
 }

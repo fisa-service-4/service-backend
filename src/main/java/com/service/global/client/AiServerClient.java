@@ -116,7 +116,8 @@ public class AiServerClient {
     private String summary;
   }
 
-  public ChatRunResult runChatAgent(Long sessionId, String message, Boolean isPin, String authorization, Long accountId) {
+  public ChatRunResult runChatAgent(
+      Long sessionId, String message, Boolean isPin, String authorization, Long accountId) {
     String url = aiServerUrl + "/chat/run";
     Long userId = getCurrentUserId();
     long startTime = System.currentTimeMillis();
@@ -124,7 +125,8 @@ public class AiServerClient {
 
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", authorization);
-    ChatRunRequest requestBody = new ChatRunRequest(sessionId, message, isPin != null && isPin, accountId);
+    ChatRunRequest requestBody =
+        new ChatRunRequest(sessionId, message, isPin != null && isPin, accountId);
 
     try {
       ResponseEntity<ChatRunWrapper> response =
@@ -142,10 +144,7 @@ public class AiServerClient {
       log.error("AI 서버 연결 실패: {}", e.getMessage());
       throw new BusinessException(ErrorCode.AI_002);
     } catch (RestClientResponseException e) {
-      log.error(
-          "AI 서버 에러 응답 (status={}, body={})",
-          e.getStatusCode(),
-          e.getResponseBodyAsString());
+      log.error("AI 서버 에러 응답 (status={}, body={})", e.getStatusCode(), e.getResponseBodyAsString());
       throw new BusinessException(ErrorCode.AI_001);
     } catch (BusinessException e) {
       throw e;

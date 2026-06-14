@@ -10,6 +10,7 @@ import lombok.Getter;
 @Builder
 public class AdminStockOrderLogResponse {
 
+  private Long userId;
   private String buyerName;
   private String accountNumberMasked;
   private String transactionType;
@@ -19,8 +20,12 @@ public class AdminStockOrderLogResponse {
   private LocalDateTime transactionOccurredAt;
 
   public static AdminStockOrderLogResponse of(
-      IntegratedStockTransactionHistory history, String buyerName, String accountNumberMasked) {
+      IntegratedStockTransactionHistory history,
+      Long userId,
+      String buyerName,
+      String accountNumberMasked) {
     return AdminStockOrderLogResponse.builder()
+        .userId(userId)
         .buyerName(buyerName)
         .accountNumberMasked(accountNumberMasked)
         .transactionType(history.getTransactionType())

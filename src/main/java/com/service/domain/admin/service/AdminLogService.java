@@ -165,7 +165,12 @@ public class AdminLogService {
               String senderName = resolveUserName(transfer.getFromUserId());
               String receiverName =
                   transfer.getToUserId() != null ? resolveUserName(transfer.getToUserId()) : null;
-              return AdminTransferLogResponse.of(transfer, senderName, receiverName);
+              return AdminTransferLogResponse.of(
+                  transfer,
+                  transfer.getFromUserId(),
+                  senderName,
+                  transfer.getToUserId(),
+                  receiverName);
             });
   }
 
@@ -195,7 +200,8 @@ public class AdminLogService {
                       .findById(history.getLinkedAccountId())
                       .map(a -> a.getAccountMasking())
                       .orElse("-");
-              return AdminStockOrderLogResponse.of(history, buyerName, accountMasking);
+              return AdminStockOrderLogResponse.of(
+                  history, history.getUserId(), buyerName, accountMasking);
             });
   }
 

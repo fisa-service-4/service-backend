@@ -101,8 +101,7 @@ class OrderServiceTest {
     PinAuth lockedPinAuth = PinAuth.builder().lockedYn(true).build();
     given(pinAuthRepository.findByUserId(userId)).willReturn(Optional.of(lockedPinAuth));
 
-    assertThatThrownBy(
-            () -> orderService.createOrder(userId, "key-002", accountId, request))
+    assertThatThrownBy(() -> orderService.createOrder(userId, "key-002", accountId, request))
         .isInstanceOf(BusinessException.class)
         .extracting(ex -> ((BusinessException) ex).getErrorCode())
         .isEqualTo(ErrorCode.AUTH_009);
@@ -206,8 +205,7 @@ class OrderServiceTest {
     PinAuth lockedPinAuth = PinAuth.builder().lockedYn(true).build();
     given(pinAuthRepository.findByUserId(userId)).willReturn(Optional.of(lockedPinAuth));
 
-    assertThatThrownBy(
-            () -> orderService.cancelOrder(userId, "cancel-key-002", orderId))
+    assertThatThrownBy(() -> orderService.cancelOrder(userId, "cancel-key-002", orderId))
         .isInstanceOf(BusinessException.class)
         .extracting(ex -> ((BusinessException) ex).getErrorCode())
         .isEqualTo(ErrorCode.AUTH_009);
@@ -257,7 +255,9 @@ class OrderServiceTest {
 
     TxPageData<ExecutionItem> executionsPage = new TxPageData<>();
     ReflectionTestUtils.setField(executionsPage, "content", List.of(executionItem));
-    given(transactionServerClient.getExecutions(anyLong(), anyString(), anyString(), anyString(), anyInt(), anyInt()))
+    given(
+            transactionServerClient.getExecutions(
+                anyLong(), anyString(), anyString(), anyString(), anyInt(), anyInt()))
         .willReturn(executionsPage);
 
     OrderResponse response = orderService.createOrder(userId, idempotencyKey, accountId, request);
