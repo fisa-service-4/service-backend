@@ -39,8 +39,8 @@ public class AnalyticsSyncScheduler {
     try {
       List<Long> userIds = analysisRawTransactionRepository.findDistinctUserIds();
       log.info("AI 파이프라인 대상 사용자: {}명", userIds.size());
-      userIds.forEach(userId ->
-          CompletableFuture.runAsync(() -> aiServerClient.triggerPipeline(userId)));
+      userIds.forEach(
+          userId -> CompletableFuture.runAsync(() -> aiServerClient.triggerPipeline(userId)));
     } catch (Exception e) {
       log.error("월간 AI 파이프라인 실행 실패: {}", e.getMessage(), e);
     }

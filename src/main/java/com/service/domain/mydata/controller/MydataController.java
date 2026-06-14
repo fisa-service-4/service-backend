@@ -43,9 +43,7 @@ public class MydataController {
     return ResponseEntity.ok(ApiResponse.success(null));
   }
 
-  @Operation(
-      summary = "연동 계좌 목록 조회",
-      description = "mydata-server에서 연동된 은행/증권 계좌 목록을 조회합니다.")
+  @Operation(summary = "연동 계좌 목록 조회", description = "mydata-server에서 연동된 은행/증권 계좌 목록을 조회합니다.")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "200",
