@@ -9,11 +9,9 @@ import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class MydataService {
 
   private final BankServerClient bankServerClient;

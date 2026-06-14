@@ -14,6 +14,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 @Component
@@ -31,15 +32,22 @@ public class BankServerClient {
     headers.set("X-Firebase-Uid", firebaseUid);
     headers.setContentType(MediaType.APPLICATION_JSON);
     Map<String, String> requestBody = Map.of("provider", provider);
-    ResponseEntity<ConnectWrapper> response =
-        restTemplate.exchange(
-            url,
-            HttpMethod.POST,
-            new HttpEntity<>(requestBody, headers),
-            new ParameterizedTypeReference<>() {});
-    ConnectWrapper body = response.getBody();
-    if (body == null || !body.isSuccess()) {
-      throw new RuntimeException("mydata-server 연동 실패: provider=" + provider);
+    try {
+      ResponseEntity<ConnectWrapper> response =
+          restTemplate.exchange(
+              url,
+              HttpMethod.POST,
+              new HttpEntity<>(requestBody, headers),
+              new ParameterizedTypeReference<>() {});
+      ConnectWrapper body = response.getBody();
+      if (body == null || !body.isSuccess()) {
+        throw new RuntimeException("mydata-server 연동 실패: provider=" + provider);
+      }
+    } catch (RestClientResponseException e) {
+      if (e.getResponseBodyAsString().contains("MYDATA_001")) {
+        return;
+      }
+      throw new RuntimeException("mydata-server 연동 실패: provider=" + provider, e);
     }
   }
 
