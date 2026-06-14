@@ -16,4 +16,6 @@ public class SendMessageRequest {
   private String message;
 
   private Boolean isPin = false;
+
+  private Long accountId;
 }
