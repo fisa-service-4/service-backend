@@ -3,6 +3,7 @@ package com.service.domain.stock.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.never;
 
 import com.service.domain.auth.entity.PinAuth;
 import com.service.domain.auth.repository.PinAuthRepository;
+import com.service.domain.mydata.entity.LinkedFinancialAccount;
 import com.service.domain.mydata.repository.IntegratedStockTransactionHistoryRepository;
 import com.service.domain.mydata.repository.LinkedFinancialAccountRepository;
 import com.service.domain.stock.dto.request.OrderCreateRequest;
@@ -19,6 +21,7 @@ import com.service.domain.stock.dto.response.OrderDetailResponse;
 import com.service.domain.stock.dto.response.OrderListResponse;
 import com.service.domain.stock.dto.response.OrderResponse;
 import com.service.global.client.TransactionServerClient;
+import com.service.global.client.TransactionServerClient.ExecutionItem;
 import com.service.global.client.TransactionServerClient.OrderCancelItem;
 import com.service.global.client.TransactionServerClient.OrderDetailItem;
 import com.service.global.client.TransactionServerClient.OrderItem;
@@ -27,6 +30,7 @@ import com.service.global.client.TransactionServerClient.TxPageData;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -209,6 +213,57 @@ class OrderServiceTest {
         .isEqualTo(ErrorCode.AUTH_009);
 
     then(transactionServerClient).should(never()).cancelOrder(anyString(), anyLong());
+  }
+
+  @Test
+  @DisplayName("연동 계좌가 존재하고 체결 내역이 있을 때 거래내역이 로컬 DB에 저장된다")
+  void createOrder_savesExecutionHistoryWhenLinkedAccountExists() {
+    Long userId = 1L;
+    Long accountId = 100L;
+    Long orderId = 1004L;
+    String idempotencyKey = "key-005";
+
+    OrderCreateRequest request = new OrderCreateRequest();
+    ReflectionTestUtils.setField(request, "stockCode", "005930");
+    ReflectionTestUtils.setField(request, "orderType", "BUY");
+    ReflectionTestUtils.setField(request, "orderMethod", "LIMIT");
+    ReflectionTestUtils.setField(request, "quantity", 3);
+    ReflectionTestUtils.setField(request, "price", new BigDecimal("70000"));
+
+    given(pinAuthRepository.findByUserId(userId)).willReturn(Optional.empty());
+
+    OrderItem orderItem = new OrderItem();
+    ReflectionTestUtils.setField(orderItem, "orderId", orderId);
+    ReflectionTestUtils.setField(orderItem, "stockCode", "005930");
+    ReflectionTestUtils.setField(orderItem, "orderType", "BUY");
+    ReflectionTestUtils.setField(orderItem, "status", "PENDING");
+    given(transactionServerClient.createOrder(idempotencyKey, accountId, request))
+        .willReturn(orderItem);
+
+    LinkedFinancialAccount linkedAccount =
+        LinkedFinancialAccount.builder().linkedAccountId(10L).build();
+    given(linkedFinancialAccountRepository.findByExternalAccountIdAndUser_UserId(accountId, userId))
+        .willReturn(Optional.of(linkedAccount));
+
+    ExecutionItem executionItem = new ExecutionItem();
+    ReflectionTestUtils.setField(executionItem, "executionId", 500L);
+    ReflectionTestUtils.setField(executionItem, "orderId", orderId);
+    ReflectionTestUtils.setField(executionItem, "stockCode", "005930");
+    ReflectionTestUtils.setField(executionItem, "stockName", "삼성전자");
+    ReflectionTestUtils.setField(executionItem, "executedPrice", new BigDecimal("70000"));
+    ReflectionTestUtils.setField(executionItem, "executedQuantity", 3);
+    ReflectionTestUtils.setField(executionItem, "executionAmount", new BigDecimal("210000"));
+    ReflectionTestUtils.setField(executionItem, "executedAt", LocalDateTime.now());
+
+    TxPageData<ExecutionItem> executionsPage = new TxPageData<>();
+    ReflectionTestUtils.setField(executionsPage, "content", List.of(executionItem));
+    given(transactionServerClient.getExecutions(anyLong(), anyString(), anyString(), anyString(), anyInt(), anyInt()))
+        .willReturn(executionsPage);
+
+    OrderResponse response = orderService.createOrder(userId, idempotencyKey, accountId, request);
+
+    assertThat(response.getOrderId()).isEqualTo(orderId);
+    then(stockTransactionHistoryRepository).should().saveAll(any());
   }
 
   @Test
