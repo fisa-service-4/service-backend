@@ -186,9 +186,16 @@ public class TransactionServerClient {
               .uri("/baas/v1/stock/accounts/{accountId}/holdings", accountId)
               .retrieve()
               .body(new ParameterizedTypeReference<>() {});
-      return response.getData().getContent();
+      if (response == null || response.getData() == null) {
+        return List.of();
+      }
+      List<HoldingItem> content = response.getData().getContent();
+      return content != null ? content : List.of();
     } catch (RestClientResponseException e) {
       throw mapError(e);
+    } catch (ResourceAccessException e) {
+      log.error("증권 서버 연결 실패 (getHoldings): {}", e.getMessage());
+      throw new BusinessException(ErrorCode.SERVER_001);
     }
   }
 

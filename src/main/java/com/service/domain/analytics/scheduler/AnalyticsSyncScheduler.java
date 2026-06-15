@@ -6,6 +6,7 @@ import com.service.domain.analytics.service.RawTransactionSyncService;
 import com.service.global.client.AiServerClient;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,6 +21,7 @@ public class AnalyticsSyncScheduler {
   private final AssetSnapshotService assetSnapshotService;
   private final AiServerClient aiServerClient;
   private final AnalysisRawTransactionRepository analysisRawTransactionRepository;
+  private final Executor pipelineTaskExecutor;
 
   /** 5분마다 신규 거래내역을 분석 DB로 동기화 */
   @Scheduled(fixedDelay = 300000)
@@ -41,6 +43,9 @@ public class AnalyticsSyncScheduler {
       log.info("AI 파이프라인 대상 사용자: {}명", userIds.size());
       userIds.forEach(
           userId -> CompletableFuture.runAsync(() -> aiServerClient.triggerPipeline(userId)));
+          userId ->
+              CompletableFuture.runAsync(
+                  () -> aiServerClient.triggerPipeline(userId), pipelineTaskExecutor));
     } catch (Exception e) {
       log.error("월간 AI 파이프라인 실행 실패: {}", e.getMessage(), e);
     }
