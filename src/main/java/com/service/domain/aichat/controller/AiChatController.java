@@ -18,6 +18,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -129,7 +130,7 @@ public class AiChatController {
   public ResponseEntity<ApiResponse<Page<MessageListResponse>>> getMessages(
       Authentication authentication,
       @PathVariable("session_id") Long sessionId,
-      @PageableDefault(size = 20) Pageable pageable) {
+      @PageableDefault(size = 20, sort = "messageId", direction = Sort.Direction.ASC) Pageable pageable) {
     Long userId = (Long) authentication.getPrincipal();
     return ResponseEntity.ok(
         ApiResponse.success(aiChatService.getMessages(userId, sessionId, pageable)));
