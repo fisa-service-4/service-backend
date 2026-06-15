@@ -42,7 +42,6 @@ public class AnalyticsSyncScheduler {
       List<Long> userIds = analysisRawTransactionRepository.findDistinctUserIds();
       log.info("AI 파이프라인 대상 사용자: {}명", userIds.size());
       userIds.forEach(
-          userId -> CompletableFuture.runAsync(() -> aiServerClient.triggerPipeline(userId)));
           userId ->
               CompletableFuture.runAsync(
                   () -> aiServerClient.triggerPipeline(userId), pipelineTaskExecutor));
