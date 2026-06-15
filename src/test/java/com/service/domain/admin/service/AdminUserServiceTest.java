@@ -75,6 +75,34 @@ class AdminUserServiceTest {
     assertThat(response.getIsOnline()).isTrue();
     assertThat(response.getUserId()).isEqualTo(1L);
     assertThat(response.getStatus()).isEqualTo("ACTIVE");
+    System.out.println("\n=== K-01: getUserDetail isOnline=true ===");
+
+    // ── Given ──────────────────────────────────────────────────
+    System.out.println("[Given] userRepository.findByIdWithProfile(1L) = User 존재");
+    User user = buildUser();
+    given(userRepository.findByIdWithProfile(1L)).willReturn(Optional.of(user));
+
+    System.out.println("[Given] loginHistoryRepository.findTop... = Optional.empty()");
+    given(loginHistoryRepository.findTopByUserIdAndLoginTypeOrderByLoggedAtDesc(1L, "LOGIN"))
+        .willReturn(Optional.empty());
+
+    System.out.println("[Given] redisTemplate.hasKey(\"refresh:1\") = true");
+    given(redisTemplate.hasKey("refresh:1")).willReturn(true);
+
+    // ── When ───────────────────────────────────────────────────
+    System.out.println("\n[When] adminUserService.getUserDetail(1L) 호출");
+    AdminUserDetailResponse response = adminUserService.getUserDetail(1L);
+
+    // ── Then ───────────────────────────────────────────────────
+    System.out.println("\n[Then] response.getIsOnline() = true 확인");
+    assertThat(response.getIsOnline()).isTrue();
+    System.out.println("        ✓ isOnline = true (Redis \"refresh:1\" 키 존재)");
+
+    assertThat(response.getUserId()).isEqualTo(1L);
+    assertThat(response.getStatus()).isEqualTo("ACTIVE");
+    System.out.println("        ✓ userId=1, status=ACTIVE");
+
+    System.out.println("\n=== PASSED ===\n");
   }
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -91,6 +119,28 @@ class AdminUserServiceTest {
     AdminUserDetailResponse response = adminUserService.getUserDetail(1L);
 
     assertThat(response.getIsOnline()).isFalse();
+    System.out.println("\n=== K-02: getUserDetail isOnline=false ===");
+
+    // ── Given ──────────────────────────────────────────────────
+    System.out.println("[Given] userRepository.findByIdWithProfile(1L) = User 존재");
+    given(userRepository.findByIdWithProfile(1L)).willReturn(Optional.of(buildUser()));
+
+    given(loginHistoryRepository.findTopByUserIdAndLoginTypeOrderByLoggedAtDesc(1L, "LOGIN"))
+        .willReturn(Optional.empty());
+
+    System.out.println("[Given] redisTemplate.hasKey(\"refresh:1\") = false");
+    given(redisTemplate.hasKey("refresh:1")).willReturn(false);
+
+    // ── When ───────────────────────────────────────────────────
+    System.out.println("\n[When] adminUserService.getUserDetail(1L) 호출");
+    AdminUserDetailResponse response = adminUserService.getUserDetail(1L);
+
+    // ── Then ───────────────────────────────────────────────────
+    System.out.println("\n[Then] response.getIsOnline() = false 확인");
+    assertThat(response.getIsOnline()).isFalse();
+    System.out.println("        ✓ isOnline = false (Redis \"refresh:1\" 키 없음)");
+
+    System.out.println("\n=== PASSED ===\n");
   }
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -100,7 +150,15 @@ class AdminUserServiceTest {
   @DisplayName("K-03: getUserDetail — User 없음 → USER_001 예외, loginHistory·Redis 미호출")
   void getUserDetail_userNotFound() {
     given(userRepository.findByIdWithProfile(1L)).willReturn(Optional.empty());
+    System.out.println("\n=== K-03: getUserDetail User 없음 ===");
 
+    // ── Given ──────────────────────────────────────────────────
+    System.out.println("[Given] userRepository.findByIdWithProfile(1L) = Optional.empty()");
+    given(userRepository.findByIdWithProfile(1L)).willReturn(Optional.empty());
+
+    // ── When & Then ────────────────────────────────────────────
+    System.out.println("\n[When] adminUserService.getUserDetail(1L) 호출");
+    System.out.println("[Then] BusinessException(USER_001) 발생 확인");
     assertThatThrownBy(() -> adminUserService.getUserDetail(1L))
         .isInstanceOf(BusinessException.class)
         .extracting(ex -> ((BusinessException) ex).getErrorCode())
@@ -108,6 +166,14 @@ class AdminUserServiceTest {
 
     then(loginHistoryRepository).shouldHaveNoInteractions();
     then(redisTemplate).shouldHaveNoInteractions();
+    System.out.println("        ✓ BusinessException(USER_001) 발생 (사용자를 찾을 수 없음)");
+
+    System.out.println("[Then] loginHistoryRepository, redisTemplate 미호출 확인");
+    then(loginHistoryRepository).shouldHaveNoInteractions();
+    then(redisTemplate).shouldHaveNoInteractions();
+    System.out.println("        ✓ 이후 로직 실행 안 됨 (User 조회 실패 시 즉시 예외)");
+
+    System.out.println("\n=== PASSED ===\n");
   }
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -119,12 +185,26 @@ class AdminUserServiceTest {
   void getUsers_translateSort_unknownFieldPassThrough() {
     given(redisTemplate.scan(any(ScanOptions.class))).willReturn(cursor);
     given(cursor.hasNext()).willReturn(false);
+    System.out.println("\n=== K-04: translateSort 알 수 없는 필드 통과 ===");
+
+    // ── Given ──────────────────────────────────────────────────
+    System.out.println("[Given] Redis scan → 빈 커서 (onlineUserIds = empty)");
+    given(redisTemplate.scan(any(ScanOptions.class))).willReturn(cursor);
+    given(cursor.hasNext()).willReturn(false);
+
+    System.out.println("[Given] userRepository.findAll(spec, pageable) → Page.empty()");
     given(userRepository.findAll(any(Specification.class), any(Pageable.class)))
         .willReturn(new PageImpl<>(List.of()));
 
     Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "unknownField"));
     adminUserService.getUsers(null, null, null, null, null, pageable);
+    System.out.println("[Given] Pageable sort='unknownField' DESC — SORT_FIELD_MAP에 없는 필드");
 
+    // ── When ───────────────────────────────────────────────────
+    System.out.println("\n[When] adminUserService.getUsers(sort=null, pageable) 호출");
+    adminUserService.getUsers(null, null, null, null, null, pageable);
+
+    // ── Then ───────────────────────────────────────────────────
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
     then(userRepository).should().findAll(any(Specification.class), pageableCaptor.capture());
     Pageable captured = pageableCaptor.getValue();
@@ -132,6 +212,13 @@ class AdminUserServiceTest {
     List<Sort.Order> orders = captured.getSort().toList();
     assertThat(orders).hasSize(1);
     assertThat(orders.get(0).getProperty()).isEqualTo("unknownField");
+    System.out.println("\n[Then] findAll에 전달된 sort 필드 확인");
+    List<Sort.Order> orders = captured.getSort().toList();
+    assertThat(orders).hasSize(1);
+    assertThat(orders.get(0).getProperty()).isEqualTo("unknownField");
+    System.out.println("        ✓ sort='unknownField' 그대로 통과 (SORT_FIELD_MAP.getOrDefault → 원본 반환)");
+
+    System.out.println("\n=== PASSED ===\n");
   }
 
   // ────────────────────────────────────────────────────────────────────────────
@@ -149,6 +236,24 @@ class AdminUserServiceTest {
     Pageable pageable = PageRequest.of(2, 5);
     adminUserService.getUsers(null, null, null, null, null, pageable);
 
+    System.out.println("\n=== K-05: translateSort 정렬 없음 → 원본 pageable 반환 ===");
+
+    // ── Given ──────────────────────────────────────────────────
+    System.out.println("[Given] Redis scan → 빈 커서");
+    given(redisTemplate.scan(any(ScanOptions.class))).willReturn(cursor);
+    given(cursor.hasNext()).willReturn(false);
+
+    given(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+        .willReturn(new PageImpl<>(List.of()));
+
+    Pageable pageable = PageRequest.of(2, 5); // sort 없음
+    System.out.println("[Given] Pageable(page=2, size=5) — sort 없음");
+
+    // ── When ───────────────────────────────────────────────────
+    System.out.println("\n[When] adminUserService.getUsers(sort=null, pageable) 호출");
+    adminUserService.getUsers(null, null, null, null, null, pageable);
+
+    // ── Then ───────────────────────────────────────────────────
     ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
     then(userRepository).should().findAll(any(Specification.class), pageableCaptor.capture());
     Pageable captured = pageableCaptor.getValue();
@@ -156,5 +261,13 @@ class AdminUserServiceTest {
     assertThat(captured.getPageNumber()).isEqualTo(2);
     assertThat(captured.getPageSize()).isEqualTo(5);
     assertThat(captured.getSort().isSorted()).isFalse();
+    System.out.println("\n[Then] 원본 pageable 그대로 반환 확인");
+    assertThat(captured.getPageNumber()).isEqualTo(2);
+    assertThat(captured.getPageSize()).isEqualTo(5);
+    assertThat(captured.getSort().isSorted()).isFalse();
+    System.out.println("        ✓ page=2, size=5, sort=없음");
+    System.out.println("        ✓ orders.isEmpty() → translateSort가 원본 pageable 반환");
+
+    System.out.println("\n=== PASSED ===\n");
   }
 }
