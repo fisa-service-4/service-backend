@@ -10,19 +10,27 @@ import lombok.Getter;
 @Builder
 public class AdminTransferLogResponse {
 
+  private Long senderId;
   private String senderName;
   private String fromAccountNumberMasked;
   private BigDecimal transferAmount;
+  private Long receiverId;
   private String receiverName;
   private String toAccountNumberMasked;
   private LocalDateTime transferredAt;
 
   public static AdminTransferLogResponse of(
-      TransferData transfer, String senderName, String receiverName) {
+      TransferData transfer,
+      Long senderId,
+      String senderName,
+      Long receiverId,
+      String receiverName) {
     return AdminTransferLogResponse.builder()
+        .senderId(senderId)
         .senderName(senderName)
         .fromAccountNumberMasked(mask(transfer.getFromAccountNumber()))
         .transferAmount(transfer.getTransferAmount())
+        .receiverId(receiverId)
         .receiverName(receiverName)
         .toAccountNumberMasked(mask(transfer.getToAccountNumber()))
         .transferredAt(transfer.getRequestedAt())
