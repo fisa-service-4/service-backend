@@ -63,6 +63,7 @@ public class LogJpaConfig {
 
     Map<String, Object> props = new HashMap<>();
     props.put("hibernate.hbm2ddl.auto", "none");
+    props.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
     em.setJpaPropertyMap(props);
     return em;
   }
