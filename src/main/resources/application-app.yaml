@@ -30,13 +30,13 @@ spring:
 
 log:
   datasource:
-    url: jdbc:postgresql://postgres-log:5432/finance_log
+    url: jdbc:postgresql://postgres:5432/finance?currentSchema=log
     username: admin
     password: 1234
 
 analytics:
   datasource:
-    url: jdbc:postgresql://postgres:5432/finance
+    url: jdbc:postgresql://postgres:5432/finance?currentSchema=analytics
     username: admin
     password: 1234
 
