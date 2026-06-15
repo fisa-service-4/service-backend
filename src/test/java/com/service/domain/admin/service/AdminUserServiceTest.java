@@ -64,6 +64,17 @@ class AdminUserServiceTest {
   @Test
   @DisplayName("K-01: getUserDetail — Redis refresh:1 키 존재 → isOnline=true")
   void getUserDetail_isOnlineTrue() {
+    User user = buildUser();
+    given(userRepository.findByIdWithProfile(1L)).willReturn(Optional.of(user));
+    given(loginHistoryRepository.findTopByUserIdAndLoginTypeOrderByLoggedAtDesc(1L, "LOGIN"))
+        .willReturn(Optional.empty());
+    given(redisTemplate.hasKey("refresh:1")).willReturn(true);
+
+    AdminUserDetailResponse response = adminUserService.getUserDetail(1L);
+
+    assertThat(response.getIsOnline()).isTrue();
+    assertThat(response.getUserId()).isEqualTo(1L);
+    assertThat(response.getStatus()).isEqualTo("ACTIVE");
     System.out.println("\n=== K-01: getUserDetail isOnline=true ===");
 
     // ── Given ──────────────────────────────────────────────────
@@ -100,6 +111,14 @@ class AdminUserServiceTest {
   @Test
   @DisplayName("K-02: getUserDetail — Redis refresh:1 키 없음 → isOnline=false")
   void getUserDetail_isOnlineFalse() {
+    given(userRepository.findByIdWithProfile(1L)).willReturn(Optional.of(buildUser()));
+    given(loginHistoryRepository.findTopByUserIdAndLoginTypeOrderByLoggedAtDesc(1L, "LOGIN"))
+        .willReturn(Optional.empty());
+    given(redisTemplate.hasKey("refresh:1")).willReturn(false);
+
+    AdminUserDetailResponse response = adminUserService.getUserDetail(1L);
+
+    assertThat(response.getIsOnline()).isFalse();
     System.out.println("\n=== K-02: getUserDetail isOnline=false ===");
 
     // ── Given ──────────────────────────────────────────────────
@@ -130,6 +149,7 @@ class AdminUserServiceTest {
   @Test
   @DisplayName("K-03: getUserDetail — User 없음 → USER_001 예외, loginHistory·Redis 미호출")
   void getUserDetail_userNotFound() {
+    given(userRepository.findByIdWithProfile(1L)).willReturn(Optional.empty());
     System.out.println("\n=== K-03: getUserDetail User 없음 ===");
 
     // ── Given ──────────────────────────────────────────────────
@@ -143,6 +163,9 @@ class AdminUserServiceTest {
         .isInstanceOf(BusinessException.class)
         .extracting(ex -> ((BusinessException) ex).getErrorCode())
         .isEqualTo(ErrorCode.USER_001);
+
+    then(loginHistoryRepository).shouldHaveNoInteractions();
+    then(redisTemplate).shouldHaveNoInteractions();
     System.out.println("        ✓ BusinessException(USER_001) 발생 (사용자를 찾을 수 없음)");
 
     System.out.println("[Then] loginHistoryRepository, redisTemplate 미호출 확인");
@@ -160,6 +183,8 @@ class AdminUserServiceTest {
   @DisplayName("K-04: getUsers — translateSort 알 수 없는 sort 필드 → 그대로 통과")
   @SuppressWarnings("unchecked")
   void getUsers_translateSort_unknownFieldPassThrough() {
+    given(redisTemplate.scan(any(ScanOptions.class))).willReturn(cursor);
+    given(cursor.hasNext()).willReturn(false);
     System.out.println("\n=== K-04: translateSort 알 수 없는 필드 통과 ===");
 
     // ── Given ──────────────────────────────────────────────────
@@ -172,6 +197,7 @@ class AdminUserServiceTest {
         .willReturn(new PageImpl<>(List.of()));
 
     Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "unknownField"));
+    adminUserService.getUsers(null, null, null, null, null, pageable);
     System.out.println("[Given] Pageable sort='unknownField' DESC — SORT_FIELD_MAP에 없는 필드");
 
     // ── When ───────────────────────────────────────────────────
@@ -183,6 +209,9 @@ class AdminUserServiceTest {
     then(userRepository).should().findAll(any(Specification.class), pageableCaptor.capture());
     Pageable captured = pageableCaptor.getValue();
 
+    List<Sort.Order> orders = captured.getSort().toList();
+    assertThat(orders).hasSize(1);
+    assertThat(orders.get(0).getProperty()).isEqualTo("unknownField");
     System.out.println("\n[Then] findAll에 전달된 sort 필드 확인");
     List<Sort.Order> orders = captured.getSort().toList();
     assertThat(orders).hasSize(1);
@@ -199,6 +228,14 @@ class AdminUserServiceTest {
   @DisplayName("K-05: getUsers — sort 없는 Pageable → translateSort가 원본 pageable 그대로 반환")
   @SuppressWarnings("unchecked")
   void getUsers_translateSort_noSortOrdersReturnOriginal() {
+    given(redisTemplate.scan(any(ScanOptions.class))).willReturn(cursor);
+    given(cursor.hasNext()).willReturn(false);
+    given(userRepository.findAll(any(Specification.class), any(Pageable.class)))
+        .willReturn(new PageImpl<>(List.of()));
+
+    Pageable pageable = PageRequest.of(2, 5);
+    adminUserService.getUsers(null, null, null, null, null, pageable);
+
     System.out.println("\n=== K-05: translateSort 정렬 없음 → 원본 pageable 반환 ===");
 
     // ── Given ──────────────────────────────────────────────────
@@ -221,6 +258,9 @@ class AdminUserServiceTest {
     then(userRepository).should().findAll(any(Specification.class), pageableCaptor.capture());
     Pageable captured = pageableCaptor.getValue();
 
+    assertThat(captured.getPageNumber()).isEqualTo(2);
+    assertThat(captured.getPageSize()).isEqualTo(5);
+    assertThat(captured.getSort().isSorted()).isFalse();
     System.out.println("\n[Then] 원본 pageable 그대로 반환 확인");
     assertThat(captured.getPageNumber()).isEqualTo(2);
     assertThat(captured.getPageSize()).isEqualTo(5);

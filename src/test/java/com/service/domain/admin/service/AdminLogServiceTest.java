@@ -54,6 +54,7 @@ class AdminLogServiceTest {
   @Test
   @DisplayName("L-01: getDashboard — avgDurationMs=null → avgApiResponseMs=null")
   void getDashboard_avgApiResponseMs_null() {
+    givenEmptyCursor();
     System.out.println("\n=== L-01: getDashboard avgApiResponseMs NULL ===");
 
     // ── Given ──────────────────────────────────────────────────
@@ -66,6 +67,9 @@ class AdminLogServiceTest {
                 any(LocalDateTime.class), any(LocalDateTime.class)))
         .willReturn(null);
 
+    DashboardResponse response = adminLogService.getDashboard();
+
+    assertThat(response.getAvgApiResponseMs()).isNull();
     // aiUsageLogRepository, systemErrorLogRepository, pinAuthRepository, userRepository 등
     // countBy* 메서드는 mock 기본값 0L 반환 — 별도 stub 불필요
 
@@ -96,6 +100,7 @@ class AdminLogServiceTest {
   @Test
   @DisplayName("L-02: getDashboard — avgDurationMs=123.7 → avgApiResponseMs=124 (Math.round)")
   void getDashboard_avgApiResponseMs_rounded() {
+    givenEmptyCursor();
     System.out.println("\n=== L-02: getDashboard avgApiResponseMs 반올림 ===");
 
     // ── Given ──────────────────────────────────────────────────
@@ -108,6 +113,9 @@ class AdminLogServiceTest {
                 any(LocalDateTime.class), any(LocalDateTime.class)))
         .willReturn(123.7);
 
+    DashboardResponse response = adminLogService.getDashboard();
+
+    assertThat(response.getAvgApiResponseMs()).isEqualTo(124L);
     // ── When ───────────────────────────────────────────────────
     System.out.println("\n[When] adminLogService.getDashboard() 호출");
     DashboardResponse response = adminLogService.getDashboard();
