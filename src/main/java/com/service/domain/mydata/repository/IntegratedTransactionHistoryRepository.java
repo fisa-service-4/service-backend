@@ -23,8 +23,8 @@ public interface IntegratedTransactionHistoryRepository
           Long userId, String institutionType);
 
   /** 계좌별 마지막 저장 거래내역 1건 조회 (증분 동기화 기준점) */
-  Optional<IntegratedTransactionHistory>
-      findFirstByLinkedAccountIdOrderByTransactionOccurredAtDesc(Long linkedAccountId);
+  Optional<IntegratedTransactionHistory> findFirstByLinkedAccountIdOrderByTransactionOccurredAtDesc(
+      Long linkedAccountId);
 
   /** 원본 거래 ID 중복 체크 */
   boolean existsByOriginalTransactionId(Long originalTransactionId);
