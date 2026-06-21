@@ -3,6 +3,7 @@ package com.service.domain.account.controller;
 import com.service.domain.account.dto.request.AccountRoleUpdateRequest;
 import com.service.domain.account.dto.response.AccountListResponse;
 import com.service.domain.account.dto.response.AccountRoleUpdateResponse;
+import com.service.domain.account.dto.response.AccountTransactionResponse;
 import com.service.domain.account.service.AccountService;
 import com.service.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.lang.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -37,6 +39,29 @@ public class AccountController {
       Authentication authentication) {
     Long userId = (Long) authentication.getPrincipal();
     return ResponseEntity.ok(ApiResponse.success(accountService.getMyAccounts(userId)));
+  }
+
+  @Operation(summary = "계좌 거래내역 조회")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200",
+        description = "조회 성공"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "403",
+        description = "ACCOUNT_002: 본인 계좌가 아닙니다"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "404",
+        description = "ACCOUNT_001: 해당 계좌를 찾을 수 없습니다")
+  })
+  @GetMapping("/{accountId}/transactions")
+  public ResponseEntity<ApiResponse<List<AccountTransactionResponse>>> getTransactions(
+      Authentication authentication,
+      @PathVariable Long accountId,
+      @RequestParam @Nullable String fromDate,
+      @RequestParam @Nullable String toDate) {
+    Long userId = (Long) authentication.getPrincipal();
+    return ResponseEntity.ok(
+        ApiResponse.success(accountService.getTransactions(userId, accountId, fromDate, toDate)));
   }
 
   @Operation(summary = "계좌 역할 설정")

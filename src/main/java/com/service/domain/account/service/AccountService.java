@@ -3,15 +3,18 @@ package com.service.domain.account.service;
 import com.service.domain.account.dto.request.AccountRoleUpdateRequest;
 import com.service.domain.account.dto.response.AccountListResponse;
 import com.service.domain.account.dto.response.AccountRoleUpdateResponse;
+import com.service.domain.account.dto.response.AccountTransactionResponse;
 import com.service.domain.mydata.entity.AccountMapping;
 import com.service.domain.mydata.entity.LinkedFinancialAccount;
 import com.service.domain.mydata.repository.AccountMappingRepository;
+import com.service.domain.mydata.repository.IntegratedTransactionHistoryRepository;
 import com.service.domain.mydata.repository.LinkedFinancialAccountRepository;
 import com.service.domain.user.entity.User;
 import com.service.domain.user.repository.UserRepository;
 import com.service.global.client.BankServerClient;
 import com.service.global.exception.BusinessException;
 import com.service.global.exception.ErrorCode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,7 @@ public class AccountService {
 
   private final LinkedFinancialAccountRepository linkedFinancialAccountRepository;
   private final AccountMappingRepository accountMappingRepository;
+  private final IntegratedTransactionHistoryRepository integratedTransactionHistoryRepository;
   private final BankServerClient bankServerClient;
   private final UserRepository userRepository;
 
@@ -128,6 +132,44 @@ public class AccountService {
         .accountRole(request.getAccountRole().name())
         .updatedAt(LocalDateTime.now())
         .build();
+  }
+
+  @Transactional(readOnly = true)
+  public List<AccountTransactionResponse> getTransactions(
+      Long userId, Long accountId, String fromDate, String toDate) {
+    LinkedFinancialAccount lfa =
+        linkedFinancialAccountRepository
+            .findByExternalAccountIdAndUser_UserId(accountId, userId)
+            .orElseThrow(
+                () -> {
+                  if (linkedFinancialAccountRepository.existsByExternalAccountId(accountId)) {
+                    return new BusinessException(ErrorCode.ACCOUNT_002);
+                  }
+                  return new BusinessException(ErrorCode.ACCOUNT_001);
+                });
+
+    LocalDateTime from =
+        (fromDate != null ? LocalDate.parse(fromDate) : LocalDate.now().withDayOfMonth(1))
+            .atStartOfDay();
+    LocalDateTime to =
+        (toDate != null ? LocalDate.parse(toDate) : LocalDate.now()).atTime(23, 59, 59);
+
+    return integratedTransactionHistoryRepository
+        .findByLinkedAccountIdAndTransactionOccurredAtBetweenOrderByTransactionOccurredAtDesc(
+            lfa.getLinkedAccountId(), from, to)
+        .stream()
+        .map(
+            h ->
+                AccountTransactionResponse.builder()
+                    .transactionId(h.getOriginalTransactionId())
+                    .transactionType(h.getTransactionType())
+                    .transactionCategory(h.getTransactionCategory())
+                    .amount(h.getTransactionAmount())
+                    .balanceAfter(h.getBalanceAfter())
+                    .merchantName(h.getMerchantName())
+                    .transactionOccurredAt(h.getTransactionOccurredAt())
+                    .build())
+        .toList();
   }
 
   public void syncForConnections(User user, BankServerClient.ConnectionsData data) {
