@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +19,6 @@ public class TransactionSyncService {
   private final IntegratedTransactionHistoryRepository integratedTransactionHistoryRepository;
   private final BankServerClient bankServerClient;
 
-  @Transactional
   public void syncAll() {
     List<LinkedFinancialAccount> bankAccounts =
         linkedFinancialAccountRepository.findAll().stream()
