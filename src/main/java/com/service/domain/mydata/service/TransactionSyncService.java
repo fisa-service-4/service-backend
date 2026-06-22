@@ -60,7 +60,7 @@ public class TransactionSyncService {
               .userId(lfa.getUser().getUserId())
               .linkedAccountId(lfa.getLinkedAccountId())
               .institutionType("BANK")
-              .transactionType(toIncomeExpense(tx.getTransactionType()))
+              .transactionType(tx.getTransactionType())
               .transactionCategory(tx.getMerchantCategory())
               .transactionAmount(tx.getAmount())
               .balanceAfter(tx.getBalanceAfter())
@@ -72,10 +72,4 @@ public class TransactionSyncService {
     }
   }
 
-  private String toIncomeExpense(String transactionType) {
-    return switch (transactionType) {
-      case "DEPOSIT", "TRANSFER_IN" -> "INCOME";
-      default -> "EXPENSE";
-    };
-  }
 }
