@@ -1,6 +1,7 @@
 package com.service.global.client;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
@@ -16,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @RequiredArgsConstructor
@@ -77,6 +79,27 @@ public class BankServerClient {
       throw new RuntimeException("mydata-server 잔액 조회 실패: accountId=" + accountId);
     }
     return body.getData().getBalance();
+  }
+
+  public List<TransactionItem> getTransactions(Long accountId, String fromDate, String toDate) {
+    UriComponentsBuilder builder =
+        UriComponentsBuilder.fromUriString(
+            mydataServerUrl + "/bank/accounts/" + accountId + "/transactions");
+    if (fromDate != null) {
+      builder.queryParam("fromDate", fromDate);
+    }
+    if (toDate != null) {
+      builder.queryParam("toDate", toDate);
+    }
+    String url = builder.toUriString();
+    ResponseEntity<TransactionListWrapper> response =
+        restTemplate.exchange(
+            url, HttpMethod.GET, HttpEntity.EMPTY, new ParameterizedTypeReference<>() {});
+    TransactionListWrapper body = response.getBody();
+    if (body == null || !body.isSuccess() || body.getData() == null) {
+      return List.of();
+    }
+    return body.getData();
   }
 
   public BankAccountDetailData getBankAccountDetail(Long accountId) {
@@ -164,6 +187,27 @@ public class BankServerClient {
   static class BankBalanceData {
     private Long accountId;
     private BigDecimal balance;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  static class TransactionListWrapper {
+    private boolean success;
+    private List<TransactionItem> data;
+  }
+
+  @Getter
+  @NoArgsConstructor
+  public static class TransactionItem {
+    private Long transactionId;
+    private LocalDateTime transactionDateTime;
+    private String transactionType;
+    private BigDecimal amount;
+    private BigDecimal balanceAfter;
+    private String description;
+    private String merchantName;
+    private String merchantCategory;
+    private String maskedCardNumber;
   }
 
   @Getter

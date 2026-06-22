@@ -130,7 +130,8 @@ public class AiChatController {
   public ResponseEntity<ApiResponse<Page<MessageListResponse>>> getMessages(
       Authentication authentication,
       @PathVariable("session_id") Long sessionId,
-      @PageableDefault(size = 20, sort = "messageId", direction = Sort.Direction.ASC) Pageable pageable) {
+      @PageableDefault(size = 20, sort = "messageId", direction = Sort.Direction.ASC)
+          Pageable pageable) {
     Long userId = (Long) authentication.getPrincipal();
     return ResponseEntity.ok(
         ApiResponse.success(aiChatService.getMessages(userId, sessionId, pageable)));

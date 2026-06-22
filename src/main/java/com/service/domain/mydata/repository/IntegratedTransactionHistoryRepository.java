@@ -1,6 +1,7 @@
 package com.service.domain.mydata.repository;
 
 import com.service.domain.mydata.entity.IntegratedTransactionHistory;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,18 @@ public interface IntegratedTransactionHistoryRepository
   Optional<IntegratedTransactionHistory>
       findFirstByUserIdAndInstitutionTypeOrderByTransactionOccurredAtDesc(
           Long userId, String institutionType);
+
+  /** 계좌별 마지막 저장 거래내역 1건 조회 (증분 동기화 기준점) */
+  Optional<IntegratedTransactionHistory> findFirstByLinkedAccountIdOrderByTransactionOccurredAtDesc(
+      Long linkedAccountId);
+
+  /** 원본 거래 ID 중복 체크 */
+  boolean existsByOriginalTransactionId(Long originalTransactionId);
+
+  /** 계좌별 기간 거래내역 조회 (최신순) */
+  List<IntegratedTransactionHistory>
+      findByLinkedAccountIdAndTransactionOccurredAtBetweenOrderByTransactionOccurredAtDesc(
+          Long linkedAccountId, LocalDateTime from, LocalDateTime to);
 
   /** 거래내역이 존재하는 사용자 ID 목록 조회 */
   @Query("SELECT DISTINCT h.userId FROM IntegratedTransactionHistory h")
