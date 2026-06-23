@@ -28,7 +28,7 @@ public class IntegratedTransactionHistory {
   @Column(name = "institution_type", nullable = false, length = 30)
   private String institutionType;
 
-  /** INCOME / EXPENSE */
+  /** DEPOSIT / WITHDRAW / TRANSFER_IN / TRANSFER_OUT / AUTO_TRANSFER */
   @Column(name = "transaction_type", nullable = false, length = 30)
   private String transactionType;
 
